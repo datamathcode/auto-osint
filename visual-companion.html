@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>auto-osint - Visual Companion</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            line-height: 1.6;
+            background: var(--background, #ffffff);
+            color: var(--foreground, #1a1a1a);
+        }
+
+        h1 {
+            color: var(--foreground, #1a1a1a);
+            border-bottom: 2px solid var(--accent, #2563eb);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        h2 {
+            color: var(--foreground, #1a1a1a);
+            margin-top: 1.5rem;
+        }
+
+        h3 {
+            color: var(--foreground, #1a1a1a);
+        }
+
+        pre {
+            background: var(--background, #f9fafb);
+            border: 1px solid var(--border, #e5e7eb);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            background: var(--background, #f3f4f6);
+            padding: 0.125rem 0.375rem;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            border: 1px solid var(--border, #e5e7eb);
+            padding: 0.75rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--background, #f3f4f6);
+            font-weight: 600;
+        }
+
+        ul {
+            margin: 0;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--accent, #2563eb);
+            color: var(--foreground, #ffffff);
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+        }
+
+        .btn:hover {
+            background: var(--accent, #1d4ed8);
+        }
+
+        .note {
+            background: var(--background, #fef3c7);
+            border-left: 4px solid var(--accent, #f59e0b);
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .success { color: var(--accent, #059669); }
+        .warning { color: var(--accent, #d97706); }
+        .danger { color: var(--accent, #dc2626); }
+    </style>
+</head>
+<body>
+    <h1>auto-osint — Visual Companion</h1>
+    <p>Full documentation and mockups: <a href="visual-companion.md" class="btn">View visual-companion.md</a></p>
+
+    <h2>UI Mockup: OSINT Research Workflow</h2>
+    <pre>
+┌─────────────────────────────────────────────────────────────┐
+│  AUTO-OSINT - Dossier Builder                                 │
+├─────────────────────────────────────────────────────────────┤
+│                                                               │
+│  [ 1 ] Define Target                                           │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ Public Figure:  Elon Musk                          │    │
+│  │                                                       │    │
+│  │ Target Persona/Claim:                               │    │
+│  │ "Elon Musk is secretly funding X organization"     │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                               │
+│  [ 2 ] OSINT Sources to Query                                  │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ ☐ Corporate Filings (SEC 13F, business registries) │    │
+│  │ ☐ Social Media Activity                              │    │
+│  │ ☐ News Archives (press releases, interviews)        │    │
+│  │ ☐ Academic/Credential Data                           │    │
+│  │ ☐ Public Records (property, legal cases)            │    │
+│  │ ☐ Financial Data (tax, donations, portfolio)         │    │
+│  │ ☐ Public Associations (NGOs, boards, think tanks)   │    │
+│  │ ☐ Speeches & Interviews (video transcripts)         │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                               │
+│  [ 3 ] Execution                                               │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │ Agent Mode: Recursive (deep)                         │    │
+│  │ Max Depth: 5 layers                                   │    │
+│  │ Parallel Queries: 8                                   │    │
+│  │ Timeout per query: 60s                                │    │
+│  └─────────────────────────────────────────────────────┘    │
+│                                                               │
+│  [ START RESEARCH ]                                           │
+└─────────────────────────────────────────────────────────────┘
+    </pre>
+
+    <h2>Research Workflow Example</h2>
+    <h3>Claim: "Elon Musk is secretly funding X organization"</h3>
+
+    <h3>Layer 0: Direct Evidence</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>SOURCE</th>
+                <th>FINDINGS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Twitter/X API</td>
+                <td>No direct X organization funding mentioned</td>
+            </tr>
+            <tr>
+                <td>SEC Filings</td>
+                <td>No 13F filings showing X as a beneficiary</td>
+            </tr>
+            <tr>
+                <td>Corporate</td>
+                <td>Tesla/Direct Investment Reports</td>
+            </tr>
+            <tr>
+                <td>Public Records</td>
+                <td>No registered funding disbursements</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="note"><strong>RESULT:</strong> Direct funding claims <strong>NOT SUPPORTED</strong> in public data</p>
+
+    <p><strong>↓ AGENT EXPANDS TO ASSOCIATIONS</strong></p>
+
+    <h3>Layer 1: Indirect Associations</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>SOURCE</th>
+                <th>FINDINGS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Press Releases</td>
+                <td>X organization statements (disclaimers)</td>
+            </tr>
+            <tr>
+                <td>Public Speeches</td>
+                <td>Musk mentions X in context</td>
+            </tr>
+            <tr>
+                <td>Business Ties</td>
+                <td>Shared entities with X</td>
+            </tr>
+            <tr>
+                <td>NGO Board Lists</td>
+                <td>No board membership found</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="note"><strong>RESULT:</strong> No verified association, funding remains unsupported</p>
+
+    <p><strong>↓ AGENT EXPANDS TO RELATED ENTITIES</strong></p>
+
+    <h3>Layer 2: Extended Network</h3>
+    <p><strong>ENTITY:</strong> Y Organization (alleged partner)</p>
+    <table>
+        <thead>
+            <tr>
+                <th>SOURCE</th>
+                <th>FINDINGS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Filings</td>
+                <td>Y's funding sources (grants, donors)</td>
+            </tr>
+            <tr>
+                <td>Public Records</td>
+                <td>Y's board members (check for overlap)</td>
+            </tr>
+            <tr>
+                <td>News</td>
+                <td>Any collaboration announcements</td>
+            </tr>
+        </tbody>
+    </table>
+    <p class="note"><strong>RESULT:</strong> No funding connection to Y either</p>
+
+    <h2>Dossier Output Structure</h2>
+    <pre>
+AUTO-OSINT DOSSIER: Elon Musk
+
+TARGET: Elon Musk
+CLAIM UNDER INVESTIGATION: "Elon Musk is secretly funding X organization"
+STATUS: COMPLETED
+RESEARCH COMPLETION DATE: 2026-11-12
+
+┌─────────────────────────────────────────────────────────────┐
+│ SUMMARY                                                        │
+├─────────────────────────────────────────────────────────────┤
+│ The investigation queried 8 OSINT data sources across 3     │
+│ research layers. No direct or indirect evidence of secret │
+│ funding was found. Public filings, corporate data, and     │
+│ financial records show no disbursements from Elon Musk or │
+│ related entities to X organization.                        │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ EVIDENCE                                                    │
+├─────────────────────────────────────────────────────────────┤
+│ SOURCE: Twitter/X API                                       │
+│ DATE: 2026-11-12                                             │
+│ FINDING: No tweets, replies, or account mentions linking Musk│
+│          to X organization funding.                          │
+│ SOURCE: SEC 13F Filings                                     │
+│ DATE: 2026-11-12                                             │
+│ FINDING: X organization not listed in any 13F filings filed│
+│          by entities under Musk's control.                  │
+│ ... (per source)                                            │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ COUNTER-EVIDENCE                                             │
+├─────────────────────────────────────────────────────────────┤
+│ SOURCE: X Organization Public Statement                    │
+│ DATE: 2026-11-12                                             │
+│ FINDING: X's public statements do not attribute funding to │
+│          Musk.                                              │
+│ SOURCE: Public Financial Disclosures                       │
+│ DATE: 2026-11-12                                             │
+│ FINDING: Musk's disclosed financial holdings do not include │
+│          X organization assets.                             │
+│ ... (per counter-source)                                    │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ INVESTIGATION NOTES                                         │
+├─────────────────────────────────────────────────────────────┤
+│ - Direct funding claims appear unsupported.                  │
+│ - No verified associations between Musk and X's leadership. │
+│ - X organization is not found in Musk's known corporate or  │
+│   investment portfolio databases.                            │
+│ - Further research in private data (if available) would be  │
+│   required for a conclusive determination.                  │
+└─────────────────────────────────────────────────────────────┘
+    </pre>
+
+    <h2>Recursive Research Pattern</h2>
+    <pre>
+INITIAL CLAIM → Query Primary Sources → Document Findings
+                              ↓
+                    Is claim SUPPORTED?
+                    ├─ YES → Compile dossier, flag as VERIFIED
+                    └─ NO  → Expand to ASSOCIATES, CONTEXT, TIMELINE
+                              ↓
+                    Is claim DISPROVEN?
+                    ├─ YES → Compile dossier, flag as DISPROVEN
+                    └─ NO  → Add third-party VERIFIED SOURCES
+                              ↓
+                    Is claim NEUTRAL (ambiguous)?
+                    └─ Continue to deeper layers until definitive or context exhausted
+    </pre>
+</body>
+</html>

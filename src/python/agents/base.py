@@ -169,6 +169,7 @@ class AgentBase(ABC):
         contradictions: Optional[List[int]] = None,
         links: Optional[List[str]] = None,
         chain_of_custody: Optional[List[Dict[str, Any]]] = None,
+        raw_text: Optional[str] = None,
     ) -> int:
         """
         Store evidence in the database.
@@ -185,6 +186,7 @@ class AgentBase(ABC):
             contradictions: List of contradictory evidence IDs
             links: URLs or file paths to sources
             chain_of_custody: Immutable log of evidence collection
+            raw_text: Unparsed tool output, stored for debugging and review
 
         Returns:
             ID of the created evidence entry
@@ -212,6 +214,7 @@ class AgentBase(ABC):
             contradictions=contradictions or [],
             links=links or [],
             chain_of_custody=chain_of_custody or [],
+            raw_text=raw_text,
             investigation_id=self.investigation_id,
         )
 

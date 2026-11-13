@@ -33,6 +33,14 @@ type GraphPayload = {
   edges: GraphEdge[];
 };
 
+type AuditPayload = {
+  claim_type: string;
+  gaps: string[];
+  unanswered_questions: string[];
+  weight: { net_confidence: number; low_confidence: boolean };
+  bias: { dominated_by: string[]; secondary_heavy: boolean };
+};
+
 async function getJson<T>(path: string): Promise<T | null> {
   const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
@@ -49,6 +57,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
   const dossier = await getJson<Dossier>(`/api/dossiers/${id}`);
   const timeline = await getJson<TimelinePayload>(`/api/timeline/${id}`);
   const graph = await getJson<GraphPayload>(`/api/graph/${id}`);
+  const audit = await getJson<AuditPayload>(`/api/audit/${id}`);
 
   if (!dossier) {
     return (
@@ -73,6 +82,26 @@ export default async function DossierPage({ params }: { params: { id: string } }
           {dossier.summary.mean_confidence.toFixed(2)}
         </p>
       </header>
+
+      {audit && audit.gaps.length > 0 && (
+        <section className="mt-6 rounded border-l-4 border-red-500 bg-red-50 p-4">
+          <h2 className="text-lg font-semibold text-red-800">
+            Gap warnings ({audit.gaps.length})
+          </h2>
+          <ul className="mt-2 list-disc pl-5 text-sm text-red-900">
+            {audit.gaps.map((gap) => (
+              <li key={gap}>{gap}</li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-red-800">
+            claim type: {audit.claim_type} · net confidence{" "}
+            {audit.weight.net_confidence.toFixed(2)}
+            {audit.bias.dominated_by.length > 0
+              ? ` · dominated by ${audit.bias.dominated_by.join(", ")}`
+              : ""}
+          </p>
+        </section>
+      )}
 
       <section className="mt-6">
         <h2 className="text-lg font-semibold">Timeline</h2>

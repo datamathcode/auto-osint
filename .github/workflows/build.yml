@@ -52,15 +52,11 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          if [ ! -d "node_modules" ]; then
-            npm install
-          else
-            npm ci
-          fi
+        run: npm ci
 
       - name: Run linter
-        run: npm run lint || true
+        run: npm run lint
+        continue-on-error: true
 
       - name: Build for production
         run: npm run build
@@ -69,5 +65,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: app/.next/
+          path: .next/
           retention-days: 7

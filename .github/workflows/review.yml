@@ -1,0 +1,88 @@
+name: Code Review
+
+on:
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  self-review:
+    name: Self-Review Checklist
+    runs-on: ubuntu-latest
+    if: github.event.action == 'opened' || github.event.action == 'synchronize'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for hardcoded secrets
+        id: check_secrets
+        run: |
+          if git diff --cached | grep -qi "api_key\|secret\|password\|token\s*=\s*['\"][^'\"]{6,}['\"]"; then
+            echo "::warning::Found potential hardcoded secrets"
+            echo "found_secrets=true" >> $GITHUB_OUTPUT
+          else
+            echo "found_secrets=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for debug statements
+        id: check_debug
+        run: |
+          if git diff --cached | grep -qi "print(\|console.log"; then
+            echo "::warning::Found debug print statements"
+            echo "found_debug=true" >> $GITHUB_OUTPUT
+          else
+            echo "found_debug=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for commented-out code
+        id: check_comments
+        run: |
+          if git diff --cached | grep -qi "^+.*#.*todo\|^+.*#.*fixme\|^+.*#" | grep -v "^+#\|^\+\s*#"; then
+            echo "::warning::Found commented-out code"
+            echo "found_comments=true" >> $GITHUB_OUTPUT
+          else
+            echo "found_comments=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check test coverage
+        id: check_tests
+        run: |
+          if [ -d "tests" ]; then
+            echo "has_tests=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_tests=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify branch naming
+        id: check_branch
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          if [[ $BRANCH =~ ^feature/[0-9]+ ]]; then
+            echo "valid_branch=true" >> $GITHUB_OUTPUT
+          else
+            echo "valid_branch=false" >> $GITHUB_OUTPUT
+            echo "::error::Branch must follow naming convention: feature/<ticket-number>"
+          fi
+
+      - name: Review summary
+        run: |
+          echo "## Self-Review Checklist Results
+          \n
+          | Check | Status |
+          |-------|--------|
+          | Hardcoded Secrets | ${{ steps.check_secrets.outputs.found_secrets == 'true' && '❌ FAILED' || '✅ PASSED' }} |
+          | Debug Statements | ${{ steps.check_debug.outputs.found_debug == 'true' && '⚠️  WARNING' || '✅ PASSED' }} |
+          | Commented-out Code | ${{ steps.check_comments.outputs.found_comments == 'true' && '⚠️  WARNING' || '✅ PASSED' }} |
+          | Test Coverage | ${{ steps.check_tests.outputs.has_tests == 'true' && '✅ PASSED' || '⚠️  WARNING' }} |
+          | Branch Naming | ${{ steps.check_branch.outputs.valid_branch == 'true' && '✅ PASSED' || '❌ FAILED' }} |
+          \n
+          - [ ] Code follows AGENTS.md conventions
+          - [ ] No hardcoded secrets or credentials
+          - [ ] No debug statements left behind
+          - [ ] No commented-out code
+          - [ ] Tests added for new functionality
+          " >> $GITHUB_STEP_SUMMARY
+
+      - name: Check failure threshold
+        if: steps.check_branch.outputs.valid_branch == 'false'
+        run: exit 1

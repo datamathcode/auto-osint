@@ -1,0 +1,15 @@
+{
+  "description": "Agent registry configuration",
+  "agents": {
+    "MockSYNINTAgent": {
+      "module": "auto_osint.agents.examples",
+      "class": "MockSYNINTAgent",
+      "description": "Mock agent for testing"
+    },
+    "SYNINTAgentWrapper": {
+      "module": "auto_osint.agents.synint_wrapper",
+      "class": "SYNINTAgentWrapper",
+      "description": "Wrapper for executing SYNINT agents"
+    }
+  }
+}

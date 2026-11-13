@@ -99,6 +99,7 @@ class SYNINTAgentWrapper(AgentBase):
                 independence_score=parsed_result.get("independence_score", 0.5),
                 independence_check_details=parsed_result.get("independence_check_details"),
                 links=parsed_result.get("links"),
+                raw_text=result.get("stdout", ""),
                 chain_of_custody=[{
                     "timestamp": self.observation_buffer[-1].get("timestamp"),
                     "command": cmd,
@@ -121,6 +122,12 @@ class SYNINTAgentWrapper(AgentBase):
                 "target": target,
                 "result": parsed_result,
                 "evidence_id": evidence_id,
+                "summary": {
+                    "claim": parsed_result.get("claim"),
+                    "confidence": parsed_result.get("confidence"),
+                    "evidence_id": evidence_id,
+                    "exit_code": result.get("returncode", 0),
+                },
                 "observations": self.get_observation_buffer(),
             }
 

@@ -16,6 +16,7 @@ from .routers import (
     investigations,
     orchestration,
     results,
+    streaming,
     timeline,
 )
 
@@ -45,6 +46,8 @@ app.include_router(timeline.router, prefix="/api/timeline", tags=["timeline"])
 app.include_router(graph.router, prefix="/api/graph", tags=["graph"])
 app.include_router(audit.router, prefix="/api/audit", tags=["audit"])
 app.include_router(config.router, prefix="/api/config", tags=["config"])
+app.include_router(streaming.sse_router, prefix="/sse", tags=["streaming"])
+app.include_router(streaming.ws_router, prefix="/ws", tags=["streaming"])
 
 @app.get("/health")
 async def health_check():

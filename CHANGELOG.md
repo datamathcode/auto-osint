@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   PostgreSQL example commented, and documents `POSTGRES_PASSWORD`.
 - `scripts/verify-installation.sh` redirected the output of its database-schema
   check to `/dev/null`, hiding both success and failure. The check now reports.
+- CI: the required checks (lint, security scan, dependency scan) and the test
+  workflow now run on pull requests to `main`. The `main` ruleset requires them,
+  but the workflows previously triggered only for `develop`, so release pull
+  requests could never satisfy the gate.
 
 ## [0.2.0] - 2026-11-13
 

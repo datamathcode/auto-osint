@@ -30,11 +30,12 @@ jobs:
 
       - name: Run tests with pytest
         run: |
-          pip install pytest pytest-cov || echo "pytest not available - skipping tests"
+          pip install pytest pytest-cov
           if [ -d "tests" ]; then
-            python -m pytest tests/ -v --cov=src/python --cov-report=xml --cov-report=html || echo "Tests failed"
+            python -m pytest tests/ -v --cov=src/python --cov-report=xml --cov-report=html
           else
             echo "No tests directory found - skipping"
+            exit 0
           fi
 
       - name: Upload coverage to Codecov

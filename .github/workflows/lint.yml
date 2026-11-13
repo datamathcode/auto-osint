@@ -27,7 +27,7 @@ jobs:
 
       - name: Lint with ruff
         run: |
-          ruff check src/python/ tests/ || echo "ruff check failed - but linting not available"
+          ruff check src/python/ tests/
 
       - name: Type check with mypy
         run: |

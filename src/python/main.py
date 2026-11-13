@@ -7,7 +7,7 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import dossiers, evidence, investigations
+from .routers import dossiers, evidence, investigations, results
 
 # Create FastAPI app
 app = FastAPI(
@@ -29,6 +29,7 @@ app.add_middleware(
 app.include_router(investigations.router, prefix="/api/investigations", tags=["investigations"])
 app.include_router(dossiers.router, prefix="/api/dossiers", tags=["dossiers"])
 app.include_router(evidence.router, prefix="/api/evidence", tags=["evidence"])
+app.include_router(results.router, prefix="/api/results", tags=["results"])
 
 @app.get("/health")
 async def health_check():

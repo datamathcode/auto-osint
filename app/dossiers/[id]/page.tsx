@@ -1,4 +1,5 @@
 import Timeline, { TimelineEvent } from "../../components/Timeline";
+import Graph, { GraphEdge, GraphNode } from "../../components/Graph";
 
 type Dossier = {
   investigation: {
@@ -27,6 +28,11 @@ type TimelinePayload = {
   contradictions: Array<{ subject: string; years: number[]; events: string[] }>;
 };
 
+type GraphPayload = {
+  nodes: GraphNode[];
+  edges: GraphEdge[];
+};
+
 async function getJson<T>(path: string): Promise<T | null> {
   const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   try {
@@ -42,6 +48,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
   const id = Number(params.id);
   const dossier = await getJson<Dossier>(`/api/dossiers/${id}`);
   const timeline = await getJson<TimelinePayload>(`/api/timeline/${id}`);
+  const graph = await getJson<GraphPayload>(`/api/graph/${id}`);
 
   if (!dossier) {
     return (
@@ -85,6 +92,11 @@ export default async function DossierPage({ params }: { params: { id: string } }
           </ul>
         </section>
       )}
+
+      <section className="mt-6">
+        <h2 className="text-lg font-semibold">Entity network</h2>
+        <Graph nodes={graph?.nodes ?? []} edges={graph?.edges ?? []} />
+      </section>
 
       <section className="mt-6">
         <h2 className="text-lg font-semibold">Evidence</h2>

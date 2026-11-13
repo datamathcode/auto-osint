@@ -1,0 +1,10 @@
+{
+  "description": "Tool registry configuration",
+  "tools": {
+    "MockSYNINTAgent": {
+      "module": "auto_osint.tools.examples",
+      "class": "MockSYNINTAgent",
+      "description": "Mock tool for testing"
+    }
+  }
+}

@@ -4,7 +4,8 @@
   "description": "Agentic recursive OSINT research with data journalism rigor.",
   "main": "index.js",
   "directories": {
-    "doc": "docs"
+    "doc": "docs",
+    "test": "tests"
   },
   "scripts": {
     "dev": "npm run dev:frontend && npm run dev:backend",

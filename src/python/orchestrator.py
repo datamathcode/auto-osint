@@ -18,11 +18,10 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, Iterable, List, Optional
 
 from .agents.base import AgentBase
 from .learning import recommended_tools
-from .research_playbook import get_tool_suggestions
 from .research_playbook import load as load_playbook
 
 logger = logging.getLogger(__name__)
@@ -150,6 +149,7 @@ class Orchestrator:
         playbook_loader: Callable[[], Dict[str, Any]] = load_playbook,
         reasoning_hook: Optional[Callable[[InvestigationPlan, Dict[str, Any], ReasoningState], None]] = None,
         event_sink: Optional[Callable[[Dict[str, Any]], None]] = None,
+        completed_tools: Optional[Iterable[str]] = None,
     ):
         self.tools = tools
         self.session = session
@@ -159,6 +159,7 @@ class Orchestrator:
         self.playbook_loader = playbook_loader
         self.reasoning_hook = reasoning_hook
         self.event_sink = event_sink
+        self.completed_tools = set(completed_tools or [])
         self.state = ReasoningState()
 
         self._sink: Optional[_EvidenceSink] = None
@@ -258,6 +259,11 @@ class Orchestrator:
                 )
             )
 
+        # Resume support: tools already completed for this investigation are
+        # not planned again.
+        if self.completed_tools:
+            steps = [step for step in steps if step.tool not in self.completed_tools]
+
         # Lessons from previous investigations reorder the plan: tools that
         # worked for this claim type run first.
         preferred = recommended_tools(playbook, claim_type)
@@ -268,11 +274,12 @@ class Orchestrator:
         return InvestigationPlan(claim=claim, target=target, claim_type=claim_type, steps=steps)
 
     def _playbook_tools(self, playbook: Dict[str, Any], claim_type: str) -> List[str]:
-        try:
-            return get_tool_suggestions(claim_type) or []
-        except Exception as exc:
-            logger.warning(f"playbook lookup failed for {claim_type}: {exc}")
+        """Suggested tools for a claim type, from the loaded playbook."""
+        section = playbook.get(claim_type)
+        if not isinstance(section, dict):
             return []
+        tools = section.get("suggested_tools")
+        return tools if isinstance(tools, list) else []
 
     def _resolve_tool(self, label: str) -> Optional[str]:
         """Map a playbook tool label onto a registered tool name."""

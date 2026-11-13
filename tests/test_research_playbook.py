@@ -4,6 +4,7 @@ Unit tests for the research playbook module.
 
 import pathlib
 
+import frontmatter
 import pytest
 
 from src.python import research_playbook
@@ -67,3 +68,21 @@ class TestResearchPlaybook:
         research_playbook.save({"version": "1.0.0"})
 
         assert research_playbook.get_tool_suggestions("unknown") == []
+
+
+class TestCheckedInPlaybook:
+    """Assert the shipped MDX carries the front matter the loader expects."""
+
+    def test_checked_in_file_has_front_matter(self):
+        """The repository playbook must load real metadata, not an empty dict."""
+        metadata = frontmatter.loads(
+            pathlib.Path(
+                "src/python/research_playbook.mdx"
+            ).read_text(encoding="utf-8")
+        ).metadata
+
+        assert metadata["version"]
+        assert metadata["funding"]["suggested_tools"]
+        assert metadata["intellectual_property"]["suggested_tools"]
+        assert metadata["default_questioning_strategies"]
+        assert metadata["default_confidence_thresholds"]["final"] > 0

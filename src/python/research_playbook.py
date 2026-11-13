@@ -3,7 +3,9 @@ Research Playbook Loader and Saver
 
 Loads and saves research playbook from MDX file.
 """
+import os
 import pathlib
+import tempfile
 from typing import Any, Dict, List
 
 import frontmatter
@@ -44,8 +46,21 @@ def save(metadata: Dict[str, Any]) -> None:
         >>> save(metadata)
     """
     post = frontmatter.Post("", **metadata)
-    with open(RESEARCH_PLAYBOOK_PATH, 'w', encoding='utf-8') as f:
-        f.write(frontmatter.dumps(post, sort_keys=False))
+    serialized = frontmatter.dumps(post, sort_keys=False)
+
+    # Write to a temporary file in the same directory, then atomically replace
+    # the playbook so a failed write never truncates the existing document.
+    fd, tmp_path = tempfile.mkstemp(
+        dir=str(RESEARCH_PLAYBOOK_PATH.parent), suffix=".mdx.tmp"
+    )
+    try:
+        with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            f.write(serialized)
+        os.replace(tmp_path, RESEARCH_PLAYBOOK_PATH)
+    except BaseException:
+        if os.path.exists(tmp_path):
+            os.unlink(tmp_path)
+        raise
 
 
 def create_default_playbook() -> Dict[str, Any]:
@@ -83,6 +98,12 @@ def create_default_playbook() -> Dict[str, Any]:
                 'Review ESPA for registered marks'
             ]
         },
+        'default_questioning_strategies': [
+            'Ask who benefits from the claim',
+            'Check funding sources for the publisher',
+            'Identify conflicts of interest',
+            'Ask what primary document would settle the claim'
+        ],
         'default_quoting_strategies': [
             'Always include source link',
             'Quote verbatim from primary sources',

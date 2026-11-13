@@ -4,7 +4,7 @@
 
 **Blocked by:** 11: Timeline Reconstruction and Visualization, 12: Network Graph Construction and Visualization, 13: Self-Auditing and Gap Detection
 
-**Status:** ready-for-agent
+**Status:** COMPLETE
 
 - [ ] Dossier API endpoints:
   - `GET /dossiers/<id>` - full dossier data
@@ -38,3 +38,35 @@
 - D3.js and React Flow components embedded in MDX
 - Export to PDF using `react-pdf` or similar
 - Confidence badges use color scheme: green > 0.7, yellow 0.4–0.7, red < 0.4
+
+**Implementation summary:**
+- Dossier API (`src/python/routers/dossiers.py`):
+  - `GET /api/dossiers/{id}` — verdict (`supported` >=0.7, `inconclusive`
+    >=0.4, otherwise `unsupported`), summary counts (high/medium/low,
+    counter-evidence), evidence, counter-evidence, and tool results.
+  - `GET /api/dossiers/{id}/evidence` — paginated (offset/limit, total, has_more).
+  - `GET /api/dossiers/{id}/timeline`, `/graph`, `/gaps`,
+    `/playbook-update` — thin views over timeline, graph, audit, and learning.
+- Viewer (`app/dossiers/[id]/page.tsx`):
+  - verdict badge, net-confidence badge, high/medium/low and counter-evidence
+    counters, gap warnings, timeline, temporal contradictions, entity network,
+    paginated evidence table (confidence badges, independence, corroborating and
+    contradictory references, source links), counter-evidence section, and the
+    recursive improvement log.
+  - `ConfidenceBadge` (green >=0.7, yellow 0.4–0.7, red <0.4),
+    `EvidenceTable` (10-row pages with "show more"), `PrintButton`.
+
+**Verification (2026-11-13):**
+- `tests/test_dossier_api.py` (9 tests): verdict thresholds, full payload with
+  counter-evidence, pagination maths, timeline/graph/gaps/playbook subroutes,
+  and 404s for unknown investigations on every subroute.
+- Full suite: 218 passed, ruff clean; `tsc --noEmit` clean; `next build` emits
+  the dossier route.
+
+**Deviations:**
+- Dossier routes live under `/api/dossiers/...` rather than bare `/dossiers/...`
+  to match the existing API prefix.
+- PDF export uses the browser's print-to-PDF via a button; `react-pdf` is not
+  installed, so no server-side PDF renderer exists.
+- Sections are React components rather than MDX-embedded components; the
+  content model is the same.

@@ -4,7 +4,7 @@
 
 **Blocked by:** 07: Integrate SYNINT Agents (Basic Set), 08: Integrate OpenOSINT Tools (API Clients)
 
-**Status:** ready-for-agent
+**Status:** COMPLETE
 
 - [ ] Next.js page `/investigate` for investigation input
 - [ ] Form fields:
@@ -34,3 +34,31 @@
 - API key storage is client-side only (browser localStorage)
 - PostgreSQL connection is server-side, not client
 - Scope options based on design document supported source types
+
+**Implementation summary:**
+- `app/investigate/page.tsx` (React Hook Form, client component):
+  - target name, claim textarea, start/end dates (validated: end >= start),
+    platform checkboxes (twitter/linkedin/github/reddit/instagram/facebook),
+    data-type checkboxes (filings/news/academic/registries/breach/social), and a
+    5–60 minute execution-time slider.
+  - Configuration panel: LLM provider select, masked LLM key, masked HIBP key,
+    SYNINT binary path, and a read-only server-side database URL.
+  - Defaults come from `GET /api/config/defaults` (env-derived, secrets reduced
+    to booleans); user config is persisted to `localStorage` under
+    `auto-osint-config` and restored on load.
+  - Start button creates the investigation, optionally runs
+    `POST /api/orchestrate`, then navigates to `/dossiers/{id}`; API and network
+    errors are shown inline, and a missing `HIBP_API_KEY` is surfaced as a warning.
+- `src/python/routers/config.py`: `GET /api/config/defaults` (llm provider list,
+  key presence flags, SYNINT path, database URL, limits; never secret values).
+- `Investigation.scope` JSON column; create accepts and validates scope
+  (date ordering, 5–60 minute budget) and returns it.
+
+**Verification (2026-11-13):**
+- `tests/test_config_and_scope.py` (9 tests): defaults shape, secrets never
+  returned, missing/present key flags, provider from env, scope persistence and
+  echo, optional scope, reversed dates, execution-time bounds, required fields.
+- `npx tsc --noEmit` clean; `next build` emits `/investigate` (15.1 kB).
+- Full suite: 197 passed, ruff clean.
+- Deviation: no frontend unit-test runner exists in this repo, so the page is
+  verified by type-checking and production build rather than component tests.

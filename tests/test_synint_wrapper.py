@@ -197,6 +197,48 @@ class TestSynintCLI:
 
         assert exit_code == 1
 
+    def test_summary_matches_stored_defaults(self, tmp_path, capsys):
+        """A claim-less agent run must report the same defaults it stored."""
+        import json as json_module
+
+        import sqlalchemy
+        from sqlalchemy.orm import sessionmaker
+
+        from src.python.agents.synint_wrapper import main
+        from src.python.models.evidence import Evidence
+
+        script = tmp_path / "empty.sh"
+        script.write_text('#!/bin/sh\necho \'{}\'\nexit 0\n')
+        script.chmod(0o755)
+        db_path = tmp_path / "defaults.db"
+
+        assert main([
+            "--synint-path", str(script),
+            "--target", "example.com",
+            "--db-url", f"sqlite:///{db_path}",
+        ]) == 0
+
+        summary = json_module.loads(capsys.readouterr().out)["summary"]
+        assert summary["claim"] == "No claim extracted"
+        assert summary["confidence"] == 0.5
+
+        Session = sessionmaker(bind=sqlalchemy.create_engine(f"sqlite:///{db_path}"))
+        with Session() as session:
+            stored = session.query(Evidence).one()
+
+        assert stored.claim == summary["claim"]
+        assert stored.confidence == summary["confidence"]
+
+
+class TestSetupDatabaseCLI:
+    def test_entry_point_returns_zero(self, tmp_path):
+        from src.python.scripts import setup_database as module
+
+        db_path = tmp_path / "cli_setup.db"
+
+        assert module.main(["--url", f"sqlite:///{db_path}"]) == 0
+        assert db_path.exists()
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

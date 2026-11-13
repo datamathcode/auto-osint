@@ -33,5 +33,24 @@ def setup_database(url: str | None = None):
     return engine
 
 
+def main(argv: list[str] | None = None) -> int:
+    """
+    Console entry point: create the schema and return an exit status.
+
+    setup_database() returns an Engine, which must not leak into sys.exit()
+    (a non-int return value makes the process exit 1).
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="auto-osint-db", description="Create the auto-osint database schema."
+    )
+    parser.add_argument("--url", default=None, help="Database URL to create")
+    args = parser.parse_args(argv)
+
+    setup_database(args.url)
+    return 0
+
+
 if __name__ == "__main__":
-    setup_database()
+    raise SystemExit(main())

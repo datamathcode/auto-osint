@@ -5,9 +5,11 @@ Does not require pytest.
 """
 
 import sys
+
 sys.path.insert(0, 'src/python')
 
 from unittest.mock import Mock
+
 from agents.base import AgentBase
 from agents.registry import AgentRegistry
 from tools.base import ToolBase, ToolRegistry

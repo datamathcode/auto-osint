@@ -3,11 +3,11 @@ FastAPI backend for auto-osint.
 Provides API endpoints for investigations, dossiers, and OSINT tools.
 """
 
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
-from .routers import investigations, dossiers
+from .routers import dossiers, investigations
 
 # Create FastAPI app
 app = FastAPI(

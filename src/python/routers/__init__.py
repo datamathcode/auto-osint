@@ -2,6 +2,6 @@
 API routers for auto-osint backend.
 """
 
-from . import investigations, dossiers
+from . import dossiers, investigations
 
 __all__ = ["investigations", "dossiers"]

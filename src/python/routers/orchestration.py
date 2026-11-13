@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 from ..database import SessionLocal, get_db
 from ..events import sink_for
+from ..learning import run_post_investigation
 from ..models.investigation import Investigation
 from ..orchestrator import Orchestrator
 from ..tools.clients import SearchBreachClient, SearchEmailClient, SearchUsernameClient
@@ -39,6 +40,7 @@ class OrchestrateRequest(BaseModel):
     claim: Optional[str] = None
     target: Optional[str] = None
     max_iterations: int = 2
+    resume: bool = False
 
 
 @router.post("")
@@ -62,6 +64,7 @@ def orchestrate(payload: OrchestrateRequest, db: Session = Depends(get_db)) -> D
         investigation_id=investigation.id,
         max_iterations=max(1, payload.max_iterations),
         event_sink=sink_for(investigation.id),
+        completed_tools=investigation.stages_completed if payload.resume else None,
     )
     result = orchestrator.run(claim, target)
 
@@ -73,6 +76,14 @@ def orchestrate(payload: OrchestrateRequest, db: Session = Depends(get_db)) -> D
         investigation.status = "completed"
 
     db.commit()
+
+    # Recursive improvement: analyse the run and append a playbook lesson.
+    try:
+        result["playbook_update"] = run_post_investigation(db, investigation.id)["playbook_update"]
+    except Exception as exc:
+        logger.warning(f"post-investigation analysis failed: {exc}")
+        result["playbook_update"] = None
+
     return result
 
 
@@ -91,6 +102,7 @@ def _run_background(investigation_id: int, claim: str, target: str, max_iteratio
             investigation_id=investigation_id,
             max_iterations=max(1, max_iterations),
             event_sink=sink_for(investigation_id),
+            completed_tools=investigation.stages_completed,
         )
         try:
             result = orchestrator.run(claim, target)
@@ -116,6 +128,11 @@ def _run_background(investigation_id: int, claim: str, target: str, max_iteratio
         if result["report"].get("summary", {}).get("failed", 0) == 0:
             investigation.status = "completed"
         session.commit()
+
+        try:
+            run_post_investigation(session, investigation_id)
+        except Exception as exc:
+            logger.warning(f"post-investigation analysis failed: {exc}")
     finally:
         session.close()
 

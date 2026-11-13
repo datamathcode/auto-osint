@@ -45,7 +45,15 @@ def save(metadata: Dict[str, Any]) -> None:
         >>> metadata = {'version': '1.0.0', 'funding': {'suggested_tools': ['SEC filings']}}
         >>> save(metadata)
     """
-    post = frontmatter.Post("", **metadata)
+    # Preserve whatever Markdown body the file already has; only the front
+    # matter is replaced. Saving must never delete the research guidance.
+    if RESEARCH_PLAYBOOK_PATH.exists():
+        with open(RESEARCH_PLAYBOOK_PATH, 'r', encoding='utf-8') as f:
+            post = frontmatter.load(f)
+        post.metadata = dict(metadata)
+    else:
+        post = frontmatter.Post("", **metadata)
+
     serialized = frontmatter.dumps(post, sort_keys=False)
 
     # Write to a temporary file in the same directory, then atomically replace
@@ -138,9 +146,15 @@ def get_tool_suggestions(claim_type: str) -> List[str]:
         ['SEC filings', 'corporate registries', 'press releases']
     """
     playbook = load()
-    sections = playbook.get(claim_type, {})
+    section = playbook.get(claim_type)
 
-    return sections.get('suggested_tools', [])
+    # Only section mappings carry tools; string/list/scalar metadata keys such
+    # as 'version' must fall through to an empty list.
+    if not isinstance(section, dict):
+        return []
+
+    tools = section.get('suggested_tools', [])
+    return tools if isinstance(tools, list) else []
 
 
 if __name__ == '__main__':

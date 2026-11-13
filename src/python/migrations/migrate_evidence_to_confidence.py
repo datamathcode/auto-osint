@@ -269,23 +269,40 @@ def transfer_evidence(
             id_map[row.id] = copied.id
             investigations_copied += 1
 
+        pending = []  # (new_row, source_row) so cross-references can be remapped
+        evidence_id_map: Dict[int, int] = {}
+
         for row in source.query(Evidence).all():
-            target.add(
-                Evidence(
-                    source=row.source,
-                    timestamp=row.timestamp,
-                    claim=row.claim,
-                    confidence=row.confidence,
-                    independence_score=row.independence_score,
-                    independence_check_details=row.independence_check_details,
-                    corroborating_sources=row.corroborating_sources or [],
-                    contradictions=row.contradictions or [],
-                    links=row.links or [],
-                    chain_of_custody=row.chain_of_custody or [],
-                    investigation_id=id_map.get(row.investigation_id, row.investigation_id),
-                )
+            copied = Evidence(
+                source=row.source,
+                timestamp=row.timestamp,
+                claim=row.claim,
+                confidence=row.confidence,
+                independence_score=row.independence_score,
+                independence_check_details=row.independence_check_details,
+                corroborating_sources=[],
+                contradictions=[],
+                links=row.links or [],
+                chain_of_custody=row.chain_of_custody or [],
+                raw_text=row.raw_text,
+                investigation_id=id_map.get(row.investigation_id, row.investigation_id),
             )
+            target.add(copied)
+            target.flush()
+            evidence_id_map[row.id] = copied.id
+            pending.append((copied, row))
             evidence_copied += 1
+
+        # Evidence IDs are reassigned by the target, so corroboration and
+        # contradiction references must be rewritten or they point at the
+        # wrong rows.
+        for copied, row in pending:
+            copied.corroborating_sources = [
+                evidence_id_map.get(ref, ref) for ref in (row.corroborating_sources or [])
+            ]
+            copied.contradictions = [
+                evidence_id_map.get(ref, ref) for ref in (row.contradictions or [])
+            ]
 
         target.commit()
 
@@ -329,7 +346,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         args.source_url, args.target_url, run_migration=not args.no_migrate
     )
     print(json.dumps(stats, indent=2, default=str))
-    return 0
+
+    failed = stats.get("migration", {}).get("failed", 0)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

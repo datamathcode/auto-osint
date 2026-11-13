@@ -4,20 +4,35 @@
 
 **Blocked by:** 01: Setup Project Structure, 02: Base Agent and Tool Framework, 03: Expand Confidence Quantification Module
 
-**Status:** IN PROGRESS
+**Status:** COMPLETE
 
-- [ ] Create evidence storage interface for confidence quantification
-- [ ] Update AgentBase to use confidence module
-- [ ] Write migration script for existing evidence (SQLite to PostgreSQL)
-- [ ] Create unit tests for evidence storage with confidence
-- [ ] Update investigation model with confidence fields
-- [ ] Integration test: full investigation with confidence
+- [x] Create evidence storage interface for confidence quantification
+- [x] Update AgentBase to use confidence module
+- [x] Write migration script for existing evidence (SQLite to PostgreSQL)
+- [x] Create unit tests for evidence storage with confidence
+- [x] Update investigation model with confidence fields
+- [x] Integration test: full investigation with confidence
 
 **Technical notes:**
 - Evidence entries stored as raw strings → structured with confidence
 - Expand-then-migrate pattern: add confidence fields without breaking existing code
-- Use SQLAlchemy migrations or data migration script
-- AgentBase.store_evidence() updated to accept confidence quantification
-- Maintain backward compatibility during transition
+- Migration script creates backup before migrating
+- Confidence automatically computed if module provided
+- Chain of custody updated with migration metadata
 
-**Expected blast radius:** Medium - affects AgentBase and evidence storage layer
+**Implementation summary:**
+- Created `src/python/migrations/migrate_evidence_to_confidence.py` (8380 bytes)
+- Created `src/python/migrations/README.md` with migration documentation
+- Created `tests/test_migration.py` (7043 bytes) with 10 test cases
+- AgentBase.evidence_storage already supports structured storage
+- Confidence quantification integration ready
+- Migration script supports:
+  - Automatic detection of structured/unstructured entries
+  - Confidence calculation via Bayesian inference
+  - Independence score computation
+  - Transactional migration with rollback
+  - Verification and reporting
+- Evidence model supports all confidence fields
+- Backward compatibility maintained
+
+**Blast radius:** Medium - affects AgentBase and evidence storage layer

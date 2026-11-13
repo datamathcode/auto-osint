@@ -11,6 +11,7 @@ from . import (
     investigations,
     orchestration,
     results,
+    streaming,
     timeline,
 )
 
@@ -24,4 +25,5 @@ __all__ = [
     "graph",
     "audit",
     "config",
+    "streaming",
 ]

@@ -127,7 +127,7 @@ export default function InvestigatePage() {
       const investigation = (await createResponse.json()) as { id: number };
 
       if (runNow) {
-        const runResponse = await fetch(`${base}/api/orchestrate`, {
+        const runResponse = await fetch(`${base}/api/orchestrate/async`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ investigation_id: investigation.id }),
@@ -137,12 +137,14 @@ export default function InvestigatePage() {
           setSubmitError(
             `Investigation #${investigation.id} created, but the run failed (${runResponse.status}).`,
           );
-          router.push(`/dossiers/${investigation.id}`);
+          router.push(`/investigations/${investigation.id}/progress`);
           return;
         }
       }
 
-      router.push(`/dossiers/${investigation.id}`);
+      router.push(
+        runNow ? `/investigations/${investigation.id}/progress` : `/dossiers/${investigation.id}`,
+      );
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Unexpected error");
     } finally {

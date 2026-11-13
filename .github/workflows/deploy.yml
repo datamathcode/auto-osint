@@ -8,9 +8,9 @@ on:
 
 jobs:
   deploy-staging:
-    name: Deploy to Staging
+    name: Deploy to Staging (SKIPPED)
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/develop'
+    if: false  # Temporarily disabled - no staging server configured
     environment:
       name: staging
       url: https://staging.auto-osint.example.com
@@ -47,32 +47,21 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Deploy to staging
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.STAGING_HOST }}
-          username: ${{ secrets.STAGING_USER }}
-          key: ${{ secrets.STAGING_SSH_KEY }}
-          script: |
-            docker pull ghcr.io/${{ github.repository }}:${{ github.sha }}
-            docker-compose -f /opt/auto-osint/docker-compose.yml up -d
-            docker system prune -f
-
       - name: Notify deployment
         run: |
-          echo "## Deployment Summary
+          echo "## Deployment Summary\n
           \n
-          **Branch:** ${{ github.ref_name }}
-          **Commit:** ${{ github.sha }}
-          **Environment:** Staging
+          **Branch:** ${{ github.ref_name }}\n
+          **Commit:** ${{ github.sha }}\n
+          **Environment:** Staging\n
           \n
-          Deployment successful!
+          Deployment skipped - staging server not configured.\n
           " >> $GITHUB_STEP_SUMMARY
 
   deploy-production:
-    name: Deploy to Production
+    name: Deploy to Production (SKIPPED)
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: false  # Temporarily disabled - no production server configured
     environment:
       name: production
       url: https://auto-osint.example.com
@@ -111,31 +100,13 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Deploy to production
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.PROD_USER }}
-          key: ${{ secrets.PROD_SSH_KEY }}
-          script: |
-            docker pull ghcr.io/${{ github.repository }}:latest
-            docker-compose -f /opt/auto-osint/docker-compose.yml up -d
-            docker system prune -f
-            docker image prune -a -f
-
-      - name: Verify deployment
+      - name: Notify deployment
         run: |
-          sleep 10
-          curl -f https://auto-osint.example.com/health || echo "Health check failed"
-        continue-on-error: true
-
-      - name: Notification
-        run: |
-          echo "## Production Deployment
+          echo "## Production Deployment\n
           \n
-          **Branch:** ${{ github.ref_name }}
-          **Commit:** ${{ github.sha }}
-          **Environment:** Production
+          **Branch:** ${{ github.ref_name }}\n
+          **Commit:** ${{ github.sha }}\n
+          **Environment:** Production\n
           \n
-          Deployment complete! All systems operational.
+          Deployment skipped - production server not configured.\n
           " >> $GITHUB_STEP_SUMMARY

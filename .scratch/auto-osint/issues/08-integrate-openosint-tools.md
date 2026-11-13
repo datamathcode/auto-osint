@@ -4,7 +4,7 @@
 
 **Blocked by:** 07: Integrate SYNINT Agents (Basic Set)
 
-**Status:** ready-for-agent
+**Status:** COMPLETE
 
 - [ ] API client for search_username (uses sherlock tool or equivalent)
 - [ ] API client for search_email (uses holehe tool or equivalent)
@@ -23,3 +23,31 @@
 - API keys stored in environment variables
 - Structured output parsing from tool stdout
 - Rate limiting per tool to avoid hitting API limits
+
+**Implementation summary:**
+- `src/python/tools/clients/base.py` — `OpenOSINTClient(ToolBase)` with a 60s
+  timeout, 10 requests/minute rate limit, `run_binary()` (subprocess with
+  timeout and non-zero exit handling), the shared result envelope, and
+  `persist()` for `openosint_results`.
+- `search_username.py` — sherlock-style client; parses `{site: url}`,
+  `{site: {url}}`, `{"sites": …}` and list shapes; non-JSON output yields
+  `partial` with the raw text preserved.
+- `search_email.py` — holehe-style client; extracts `[+]` hits and URLs from
+  text output, rejects malformed addresses.
+- `search_breach.py` — HIBP v3 client via `requests`; 404 means "no breaches"
+  (success), 401/429/other HTTP errors return explicit failures, key from
+  `HIBP_API_KEY` or the constructor.
+- `GET /api/results?target_id=&investigation_id=&tool=&limit=` and
+  `GET /api/results/{id}` — query stored results by target (investigation
+  `target_id` or `target_name`), investigation, or tool.
+- All three clients registered in `src/python/tools/config.json`.
+
+**Verification (2026-11-13):**
+- `tests/test_openosint_clients.py` (20 tests): parsing shapes, timeout
+  enforcement (1s against `sleep 5`), rate limiting (second call blocked),
+  missing binary, non-JSON partial results, HIBP 200/404/401/timeout/missing
+  key, persistence into `openosint_results`, and the results API by target,
+  tool, and id.
+- Full suite: 110 passed, ruff clean.
+- Note: sherlock/holehe binaries and a live HIBP key are not installed here;
+  tests use stub executables and a stubbed HTTP layer.

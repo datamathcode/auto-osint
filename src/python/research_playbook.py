@@ -3,9 +3,10 @@ Research Playbook Loader and Saver
 
 Loads and saves research playbook from MDX file.
 """
-import frontmatter
 import pathlib
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import frontmatter
 
 RESEARCH_PLAYBOOK_PATH = pathlib.Path(__file__).parent / "research_playbook.mdx"
 
@@ -42,8 +43,9 @@ def save(metadata: Dict[str, Any]) -> None:
         >>> metadata = {'version': '1.0.0', 'funding': {'suggested_tools': ['SEC filings']}}
         >>> save(metadata)
     """
+    post = frontmatter.Post("", **metadata)
     with open(RESEARCH_PLAYBOOK_PATH, 'w', encoding='utf-8') as f:
-        frontmatter.dump(metadata, f, sort_keys=False)
+        f.write(frontmatter.dumps(post, sort_keys=False))
 
 
 def create_default_playbook() -> Dict[str, Any]:

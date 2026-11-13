@@ -46,7 +46,7 @@ from src.python.database import create_db_engine, init_db
 engine = create_db_engine()
 init_db(engine)
 print("schema ok")
-' >/dev/null
+'
 
 echo
 echo "Frontend"

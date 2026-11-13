@@ -188,6 +188,10 @@ class ToolBase(ABC):
         else:
             logger.error(f"{self.name} failed: {error}")
 
+    def persist(self, result: Dict[str, Any], investigation_id: int) -> Optional[int]:
+        """Store a result row through the attached session (alias of save_to_database)."""
+        return self.save_to_database(result, investigation_id)
+
     def save_to_database(
         self,
         result: Dict[str, Any],

@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional
 
 from .agents.base import AgentBase
+from .learning import recommended_tools
 from .research_playbook import get_tool_suggestions
 from .research_playbook import load as load_playbook
 
@@ -163,6 +164,15 @@ class Orchestrator:
             self._sink = _EvidenceSink(name="Orchestrator", investigation_id=investigation_id)
             self._sink.set_evidence_storage(session)
 
+        # Give every tool the session so it can persist its own result rows.
+        if session is not None:
+            for tool in self.tools.values():
+                setter = getattr(tool, "set_db_session", None)
+                if callable(setter):
+                    setter(session)
+                elif hasattr(tool, "save_to_database"):
+                    tool.db_session = session
+
     # -- planning --------------------------------------------------------
 
     def plan_investigation(self, claim: str, target: str) -> InvestigationPlan:
@@ -219,6 +229,13 @@ class Orchestrator:
                     optional=True,
                 )
             )
+
+        # Lessons from previous investigations reorder the plan: tools that
+        # worked for this claim type run first.
+        preferred = recommended_tools(playbook, claim_type)
+        if preferred:
+            order = {name: index for index, name in enumerate(preferred)}
+            steps.sort(key=lambda step: order.get(step.tool, len(order)))
 
         return InvestigationPlan(claim=claim, target=target, claim_type=claim_type, steps=steps)
 
@@ -324,6 +341,19 @@ class Orchestrator:
 
         data = tool_result.get("data") or {}
         claim_text = self._claim_from_result(tool_result, data)
+
+        # Persist the raw tool result so it is queryable via /api/results and
+        # visible to post-investigation analysis.
+        tool = self.tools.get(str(tool_result.get("tool") or ""))
+        if self.session is not None and self.investigation_id is not None and tool is not None:
+            persist = getattr(tool, "persist", None)
+            if callable(persist):
+                try:
+                    observation["result_id"] = persist(tool_result, self.investigation_id)
+                except Exception as exc:
+                    logger.error(f"tool result persistence failed: {exc}")
+                    observation["result_error"] = str(exc)
+
         if claim_text:
             observation["claim"] = claim_text
             self.state.findings.append(observation)

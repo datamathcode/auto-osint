@@ -2,7 +2,7 @@
 Investigation API endpoints.
 """
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -15,12 +15,23 @@ from ..models.investigation import Investigation
 router = APIRouter()
 
 
+class InvestigationScope(BaseModel):
+    """Optional investigation scope captured from the UI."""
+
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
+    platforms: List[str] = Field(default_factory=list)
+    data_types: List[str] = Field(default_factory=list)
+    max_execution_minutes: int = Field(default=60, ge=5, le=60)
+
+
 class InvestigationCreate(BaseModel):
     """Request body for creating an investigation."""
 
     target_name: str = Field(..., min_length=1)
     claim_under_investigation: str = Field(..., min_length=1)
     target_id: Optional[str] = None
+    scope: Optional[InvestigationScope] = None
 
 
 class InvestigationUpdate(BaseModel):
@@ -41,6 +52,7 @@ class InvestigationOut(BaseModel):
     status: str
     net_confidence_score: Optional[float]
     investigation_notes: Optional[str]
+    scope: Optional[Dict[str, Any]] = None
 
     model_config = {"from_attributes": True}
 
@@ -50,11 +62,19 @@ def create_investigation(
     payload: InvestigationCreate, db: Session = Depends(get_db)
 ) -> Investigation:
     """Create an investigation in progress."""
+    scope = payload.scope.model_dump() if payload.scope else None
+    if scope and scope.get("start_date") and scope.get("end_date"):
+        if scope["end_date"] < scope["start_date"]:
+            raise HTTPException(
+                status_code=422, detail="end_date must be on or after start_date"
+            )
+
     investigation = Investigation(
         target_name=payload.target_name,
         target_id=payload.target_id,
         claim_under_investigation=payload.claim_under_investigation,
         status="in_progress",
+        scope=scope,
     )
     db.add(investigation)
     db.commit()

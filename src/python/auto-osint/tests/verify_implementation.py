@@ -4,13 +4,14 @@ Simple verification script to check if Agent and Tool base classes work.
 Does not require pytest.
 """
 
-import sys
 import os
+import sys
 
 # Add src/python to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src', 'python'))
 
 from unittest.mock import Mock
+
 from agents.base import AgentBase
 from agents.registry import AgentRegistry
 from tools.base import ToolBase, ToolRegistry

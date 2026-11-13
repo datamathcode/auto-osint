@@ -3,7 +3,8 @@ Agent registry for auto-osint.
 Provides registry pattern for agent discovery and management.
 """
 
-from typing import Dict, List, Type, Optional
+from typing import Dict, List, Optional, Type
+
 from .base import AgentBase
 
 
@@ -117,7 +118,7 @@ def _auto_register_agents():
     Auto-register all agents that inherit from AgentBase.
     This function is called when the module is imported.
     """
-    for agent_name in AgentRegistry.list_agents():
+    for _agent_name in AgentRegistry.list_agents():
         # The actual registration happens when individual agents are imported
         # This is just a placeholder for the pattern
         pass

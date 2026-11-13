@@ -5,13 +5,12 @@ This module provides a wrapper that executes SYNINT agents from the command line
 and stores results as evidence in the database.
 """
 
-import subprocess
 import json
 import logging
-from typing import Any, Dict, List, Optional
+import subprocess
+from typing import Any, Dict, List
 
 from ..agents.base import AgentBase
-from ..models.evidence import Evidence
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -168,7 +167,7 @@ class SYNINTAgentWrapper(AgentBase):
             stdout, stderr = process.communicate()
             raise subprocess.TimeoutExpired(
                 cmd[0], self.timeout_seconds, output=stdout, stderr=stderr
-            )
+            ) from None
 
         # A non-zero exit code is a failed command. Raise so that
         # _execute_with_retry retries it and so that failed output is never

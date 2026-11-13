@@ -2,9 +2,10 @@
 OpenOSINT results model for auto-osint.
 """
 
-from sqlalchemy import Column, Integer, Text, DateTime, JSON, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, Text
+from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 

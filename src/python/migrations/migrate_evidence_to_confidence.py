@@ -6,17 +6,14 @@ This script migrates existing evidence entries by converting claim strings to
 structured claims with confidence metadata.
 
 Usage:
-    python src/python/migrations/migrate_evidence_to_confidence.py
+    python -m src.python.migrations.migrate_evidence_to_confidence
 """
 
 import sys
-from typing import Dict, Any, List
 from datetime import datetime
+from typing import Dict
 
-# Add parent directory to path for imports
-sys.path.insert(0, '..')
-
-from models.evidence import Evidence
+from ..models.evidence import Evidence
 
 
 class EvidenceMigration:
@@ -55,7 +52,7 @@ class EvidenceMigration:
         
         if total_count == 0:
             print("No evidence entries found. Nothing to migrate.")
-            return {"total": 0, "success": 0, "failed": 0}
+            return {"total": 0, "success": 0, "skipped": 0, "failed": 0}
         
         print(f"\nFound {total_count} evidence entries to migrate.\n")
         
@@ -74,7 +71,7 @@ class EvidenceMigration:
                     continue
                 
                 # If confidence is already set, use it
-                if evidence.confidence > 0:
+                if evidence.confidence and evidence.confidence > 0:
                     print(f"  ✓ Using existing confidence: {evidence.confidence}")
                 else:
                     # Calculate confidence if module provided
@@ -98,7 +95,7 @@ class EvidenceMigration:
                         
                         print(f"  ✓ Confidence calculated: {confidence_score:.2f}")
                     else:
-                        print(f"  ⚠️  No confidence module provided. Defaulting to 0.5")
+                        print("  ⚠️  No confidence module provided. Defaulting to 0.5")
                         evidence.confidence = 0.5
                         evidence.independence_score = 0.5
                 

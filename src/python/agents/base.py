@@ -3,11 +3,11 @@ Base Agent class for auto-osint.
 Provides common methods for agent execution, observation, evidence storage, and confidence updates.
 """
 
+import logging
+import time
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Callable, Dict, List, Optional
-import logging
-import time
 
 from ..models.evidence import Evidence
 

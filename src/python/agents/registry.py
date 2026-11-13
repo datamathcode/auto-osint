@@ -3,6 +3,7 @@ Agent registry for auto-osint.
 Provides registry pattern for agent discovery and management.
 """
 
+import importlib
 from typing import Dict, List, Optional, Type
 
 from .base import AgentBase
@@ -97,9 +98,8 @@ class AgentRegistry:
                 raise ValueError(f"Invalid agent config for {agent_name}: missing module or class")
 
             try:
-                # Dynamically import the module
-                parts = module_path.split(".")
-                module = __import__(".".join(parts[:-1]), fromlist=[parts[-1]])
+                # Import the module named in the config, then read the class.
+                module = importlib.import_module(module_path)
                 agent_class = getattr(module, class_name)
 
                 # Register the agent

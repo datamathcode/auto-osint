@@ -1,10 +1,10 @@
 {
   "description": "Tool registry configuration",
   "tools": {
-    "MockSYNINTAgent": {
-      "module": "auto_osint.tools.examples",
-      "class": "MockSYNINTAgent",
-      "description": "Mock tool for testing"
+    "MockDomainLookupTool": {
+      "module": "src.python.tools.examples.mock_tool",
+      "class": "MockDomainLookupTool",
+      "description": "Deterministic domain lookup tool for testing"
     }
   }
 }

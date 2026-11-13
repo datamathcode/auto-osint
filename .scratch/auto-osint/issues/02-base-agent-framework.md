@@ -43,3 +43,13 @@
 - All Python files compile without syntax errors
 - Follows AGENTS.md conventions (prefix commands, commit format, structure)
 - Tests written but not executed (pytest not installed in current environment)
+
+**Verification (2026-11-13):** all previously-unmet items are now met.
+- CLI: `python -m src.python.agents.synint_wrapper --synint-path ... --target ...`
+  runs an agent, creates the investigation, stores evidence, and exits 0/1.
+  Covered by `TestSynintCLI`.
+- Registry: `register_from_config()` had imported the parent package instead of
+  the module, and both configs pointed at the non-existent `auto_osint` package.
+  Fixed with `importlib.import_module` and `src.python.*` paths; both registries
+  now report real classes (`tests/test_registry_config.py`).
+- End-to-end: 76 tests pass, including API, CLI, registry, and migration suites.

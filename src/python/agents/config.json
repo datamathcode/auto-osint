@@ -2,12 +2,12 @@
   "description": "Agent registry configuration",
   "agents": {
     "MockSYNINTAgent": {
-      "module": "auto_osint.agents.examples",
+      "module": "src.python.agents.examples.mock_synint_agent",
       "class": "MockSYNINTAgent",
       "description": "Mock agent for testing"
     },
     "SYNINTAgentWrapper": {
-      "module": "auto_osint.agents.synint_wrapper",
+      "module": "src.python.agents.synint_wrapper",
       "class": "SYNINTAgentWrapper",
       "description": "Wrapper for executing SYNINT agents"
     }

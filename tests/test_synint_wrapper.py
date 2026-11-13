@@ -139,5 +139,64 @@ class TestSYNINTAgentWrapper:
         assert parsed["confidence"] == 0.7  # Default confidence
 
 
+class TestSynintCLI:
+    """The wrapper must be runnable as a command, not only as a class."""
+
+    def test_cli_stores_evidence_and_reports_success(self, tmp_path):
+        script = tmp_path / "synint.sh"
+        script.write_text(
+            "#!/bin/sh\n"
+            'echo \'{"claim": "Registered to Acme in 2020", "confidence": 0.85}\'\n'
+            "exit 0\n"
+        )
+        script.chmod(0o755)
+        db_path = tmp_path / "cli.db"
+
+        from src.python.agents.synint_wrapper import main
+
+        exit_code = main(
+            [
+                "--synint-path", str(script),
+                "--agent", "WhoisAgent",
+                "--target", "example.com",
+                "--db-url", f"sqlite:///{db_path}",
+            ]
+        )
+
+        assert exit_code == 0
+
+        from sqlalchemy import create_engine
+        from sqlalchemy.orm import sessionmaker
+
+        from src.python.models.evidence import Evidence
+        from src.python.models.investigation import Investigation
+
+        Session = sessionmaker(bind=create_engine(f"sqlite:///{db_path}"))
+        with Session() as session:
+            investigation = session.query(Investigation).one()
+            evidence = session.query(Evidence).one()
+            assert investigation.target_name == "example.com"
+            assert evidence.confidence == 0.85
+            assert evidence.investigation_id == investigation.id
+
+    def test_cli_returns_non_zero_on_failed_agent(self, tmp_path):
+        script = tmp_path / "fail.sh"
+        script.write_text("#!/bin/sh\nexit 3\n")
+        script.chmod(0o755)
+
+        from src.python.agents.synint_wrapper import main
+
+        exit_code = main(
+            [
+                "--synint-path", str(script),
+                "--target", "example.com",
+                "--db-url", f"sqlite:///{tmp_path / 'fail.db'}",
+                "--max-retries", "0",
+            ]
+        )
+
+        assert exit_code == 1
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

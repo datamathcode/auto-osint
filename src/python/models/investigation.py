@@ -5,9 +5,8 @@ Investigation model for auto-osint.
 from datetime import datetime
 
 from sqlalchemy import JSON, Column, DateTime, Float, Integer, Text
-from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+from .base import Base
 
 
 class Investigation(Base):

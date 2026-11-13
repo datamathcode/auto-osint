@@ -67,3 +67,5 @@ select = ["E4", "E7", "E9", "F", "I", "B"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["B011", "F401"]
+# FastAPI's dependency injection requires the Depends(...) call as a default.
+"src/python/routers/*" = ["B008"]

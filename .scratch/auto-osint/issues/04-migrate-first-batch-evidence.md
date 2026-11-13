@@ -36,3 +36,18 @@
 - Backward compatibility maintained
 
 **Blast radius:** Medium - affects AgentBase and evidence storage layer
+
+**Verification (2026-11-13):** the three previously-unmet items are now met.
+- `AgentBase` accepts a `confidence_module`, exposes
+  `set_confidence_module()`, and `store_evidence()` scores the claim through it
+  when confidence/independence are omitted (0.5 fallback when unscored).
+- `transfer_evidence(source_url, target_url)` performs the actual
+  database-to-database copy: investigations and evidence are read from the
+  source engine, written into the target schema, and then migrated in place.
+  CLI: `python -m src.python.migrations.migrate_evidence_to_confidence
+  --source-url ... --target-url ...`.
+- `tests/test_integration_investigation.py` builds a real SQLite source DB,
+  copies it to a second file DB, migrates it, and asserts 3/3 structured rows
+  with investigation IDs remapped.
+- Migration now assigns a new `chain_of_custody` list instead of mutating the
+  JSON column in place, which SQLAlchemy does not track.

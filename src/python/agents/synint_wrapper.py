@@ -91,12 +91,22 @@ class SYNINTAgentWrapper(AgentBase):
             # Parse results
             parsed_result = self._parse_synint_result(result)
 
+            # Derive the stored values once so the summary cannot disagree with
+            # what actually landed in the database.
+            claim_value = parsed_result.get("claim") or "No claim extracted"
+            confidence_value = parsed_result.get("confidence")
+            if confidence_value is None:
+                confidence_value = 0.5
+            independence_value = parsed_result.get("independence_score")
+            if independence_value is None:
+                independence_value = 0.5
+
             # Store evidence
             evidence_id = self.store_evidence(
                 source=f"SYNINT:{agent_name}",
-                claim=parsed_result.get("claim", "No claim extracted"),
-                confidence=parsed_result.get("confidence", 0.5),
-                independence_score=parsed_result.get("independence_score", 0.5),
+                claim=claim_value,
+                confidence=confidence_value,
+                independence_score=independence_value,
                 independence_check_details=parsed_result.get("independence_check_details"),
                 links=parsed_result.get("links"),
                 raw_text=result.get("stdout", ""),
@@ -112,7 +122,7 @@ class SYNINTAgentWrapper(AgentBase):
             self.observe({
                 "type": "evidence_stored",
                 "evidence_id": evidence_id,
-                "claim": parsed_result.get("claim"),
+                "claim": claim_value,
             })
 
             # Return result
@@ -123,8 +133,8 @@ class SYNINTAgentWrapper(AgentBase):
                 "result": parsed_result,
                 "evidence_id": evidence_id,
                 "summary": {
-                    "claim": parsed_result.get("claim"),
-                    "confidence": parsed_result.get("confidence"),
+                    "claim": claim_value,
+                    "confidence": confidence_value,
                     "evidence_id": evidence_id,
                     "exit_code": result.get("returncode", 0),
                 },

@@ -47,7 +47,7 @@ dev = [
 
 [project.scripts]
 synint-wrapper = "src.python.agents.synint_wrapper:main"
-auto-osint-db = "src.python.scripts.setup_database:setup_database"
+auto-osint-db = "src.python.scripts.setup_database:main"
 migrate-evidence = "src.python.migrations.migrate_evidence_to_confidence:main"
 
 [project.urls]

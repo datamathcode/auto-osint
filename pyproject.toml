@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
+requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -49,9 +49,9 @@ dev = [
 Homepage = "https://github.com/datamathcode/auto-osint"
 Documentation = "https://github.com/datamathcode/auto-osint#readme"
 
-[tool.setuptools]
-# Namespace package discovery from repository root
-namespace-packages = ["src.python"]
-
-[tool.setuptools.package-dir]
-"" = "src.python"
+[tool.setuptools.packages.find]
+# Source root is the repository root: packages live under src/python.
+where = ["."]
+include = ["src*"]
+exclude = ["src.python.auto-osint*"]
+namespaces = true

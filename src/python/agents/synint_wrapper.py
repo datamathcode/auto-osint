@@ -139,7 +139,7 @@ class SYNINTAgentWrapper(AgentBase):
                 "observations": self.get_observation_buffer(),
             }
 
-    def _run_synint_agent(self, cmd: List[str]) -> Dict[str, str]:
+    def _run_synint_agent(self, cmd: List[str]) -> Dict[str, Any]:
         """
         Run SYNINT agent as a subprocess.
 
@@ -163,20 +163,26 @@ class SYNINTAgentWrapper(AgentBase):
 
         try:
             stdout, stderr = process.communicate(timeout=self.timeout_seconds)
-            return {
-                "stdout": stdout,
-                "stderr": stderr,
-                "returncode": process.returncode,
-            }
         except subprocess.TimeoutExpired:
             process.kill()
             stdout, stderr = process.communicate()
             raise subprocess.TimeoutExpired(
                 cmd[0], self.timeout_seconds, output=stdout, stderr=stderr
             )
-        except Exception as e:
-            # Re-raise other subprocess exceptions to allow retry logic
-            raise
+
+        # A non-zero exit code is a failed command. Raise so that
+        # _execute_with_retry retries it and so that failed output is never
+        # stored as successful evidence.
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                process.returncode, cmd, output=stdout, stderr=stderr
+            )
+
+        return {
+            "stdout": stdout,
+            "stderr": stderr,
+            "returncode": process.returncode,
+        }
 
     def _parse_synint_result(self, result: Dict[str, str]) -> Dict[str, Any]:
         """

@@ -1,20 +1,23 @@
-# 04: Migrate - First Batch: Evidence Entry Storage
+# 04: Migrate First Batch of Evidence Storage
 
-**What to build:** Migrate ONE evidence-producing module (a SYNINT agent that writes evidence to files) to use the new `confidence_quantization()` function. Evidence entries are stored with raw claim and source metadata; confidence is logged but not yet quantified.
+**What to build:** Migrate initial batch of evidence entries from old raw string storage to the new confidence quantification module. Update AgentBase.evidence_storage integration with confidence calculation.
 
-**Blocked by:** 03: Expand - Confidence Quantification Module
+**Blocked by:** 01: Setup Project Structure, 02: Base Agent and Tool Framework, 03: Expand Confidence Quantification Module
 
-**Status:** ready-for-agent
+**Status:** IN PROGRESS
 
-- [ ] Identify one evidence-producing module (e.g., WhoisAgent or DNSEnumAgent)
-- [ ] Modify it to import and call `confidence_quantization()`
-- [ ] Confidence is passed to storage but not applied to the claim yet
-- [ ] All existing tests pass
-- [ ] No evidence is lost during migration
-- [ ] Evidence can still be queried from PostgreSQL
-- [ ] Integration test confirms the modified agent works end-to-end
+- [ ] Create evidence storage interface for confidence quantification
+- [ ] Update AgentBase to use confidence module
+- [ ] Write migration script for existing evidence (SQLite to PostgreSQL)
+- [ ] Create unit tests for evidence storage with confidence
+- [ ] Update investigation model with confidence fields
+- [ ] Integration test: full investigation with confidence
 
 **Technical notes:**
-- This is the first of many migrate batches (expand-contract pattern)
-- Keep each batch small to stay in single context window
-- This batch is the expand phase—no blast radius yet
+- Evidence entries stored as raw strings → structured with confidence
+- Expand-then-migrate pattern: add confidence fields without breaking existing code
+- Use SQLAlchemy migrations or data migration script
+- AgentBase.store_evidence() updated to accept confidence quantification
+- Maintain backward compatibility during transition
+
+**Expected blast radius:** Medium - affects AgentBase and evidence storage layer

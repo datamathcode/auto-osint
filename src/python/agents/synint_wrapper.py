@@ -151,7 +151,8 @@ class SYNINTAgentWrapper(AgentBase):
 
         Raises:
             subprocess.TimeoutExpired: If execution times out
-            subprocess.CalledProcessError: If command fails
+            subprocess.CalledProcessError: If command fails with non-zero exit code
+            RuntimeError: For other subprocess errors
         """
         process = subprocess.Popen(
             cmd,
@@ -170,9 +171,12 @@ class SYNINTAgentWrapper(AgentBase):
         except subprocess.TimeoutExpired:
             process.kill()
             stdout, stderr = process.communicate()
-            raise TimeoutError(
-                f"SYNINT agent timed out after {self.timeout_seconds}s"
+            raise subprocess.TimeoutExpired(
+                cmd[0], self.timeout_seconds, output=stdout, stderr=stderr
             )
+        except Exception as e:
+            # Re-raise other subprocess exceptions to allow retry logic
+            raise
 
     def _parse_synint_result(self, result: Dict[str, str]) -> Dict[str, Any]:
         """

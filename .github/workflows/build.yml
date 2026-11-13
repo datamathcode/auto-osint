@@ -22,7 +22,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -e .
+          pip install -e .[dev]
+
+      - name: Install build tools
+        run: |
+          pip install build
 
       - name: Build Python package
         run: |
@@ -48,7 +52,12 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          if [ ! -d "node_modules" ]; then
+            npm install
+          else
+            npm ci
+          fi
 
       - name: Run linter
         run: npm run lint || true

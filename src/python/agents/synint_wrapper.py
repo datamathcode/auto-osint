@@ -164,7 +164,10 @@ class SYNINTAgentWrapper(AgentBase):
             stdout, stderr = process.communicate(timeout=self.timeout_seconds)
         except subprocess.TimeoutExpired:
             process.kill()
-            stdout, stderr = process.communicate()
+            try:
+                stdout, stderr = process.communicate()
+            except Exception:  # cleanup only; the timeout is the real error
+                stdout, stderr = "", ""
             raise subprocess.TimeoutExpired(
                 cmd[0], self.timeout_seconds, output=stdout, stderr=stderr
             ) from None

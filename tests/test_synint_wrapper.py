@@ -88,11 +88,15 @@ class TestSYNINTAgentWrapper:
         mock_store.assert_not_called()
 
     def test_execute_with_timeout(self):
-        """Test that a subprocess timeout fails the run."""
+        """Test that a subprocess timeout fails the run and kills the process."""
         wrapper = make_wrapper()
 
         process = MagicMock()
-        process.communicate.side_effect = subprocess.TimeoutExpired("synint", 5)
+        # First communicate() times out; the cleanup call after kill() returns.
+        process.communicate.side_effect = [
+            subprocess.TimeoutExpired("synint", 5),
+            ("", ""),
+        ]
         process.returncode = None
 
         with patch("subprocess.Popen", return_value=process):
@@ -101,6 +105,8 @@ class TestSYNINTAgentWrapper:
 
         assert result["status"] == "failed"
         assert "timed out" in result["error"].lower()
+        process.kill.assert_called_once()
+        assert process.communicate.call_count == 2
         mock_store.assert_not_called()
 
     def test_parse_synint_result_json(self):

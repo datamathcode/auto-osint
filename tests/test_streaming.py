@@ -13,12 +13,21 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import src.python.models  # noqa: F401  (registers tables on Base)
+import src.python.research_playbook as research_playbook
 from src.python.database import get_db, init_db
 from src.python.events import EventBus, bus
 from src.python.main import app
 from src.python.models.investigation import Investigation
 from src.python.orchestrator import Orchestrator
 from src.python.tools.base import ToolBase
+
+
+@pytest.fixture(autouse=True)
+def _isolated_playbook(tmp_path, monkeypatch):
+    path = tmp_path / "playbook.mdx"
+    path.write_text("---\nversion: \"1.0.0\"\n---\n\n# Playbook\n", encoding="utf-8")
+    monkeypatch.setattr(research_playbook, "RESEARCH_PLAYBOOK_PATH", path)
+    return path
 
 
 class StubTool(ToolBase):

@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 import src.python.models  # noqa: F401  (registers tables on Base)
+import src.python.research_playbook as research_playbook
 from src.python.database import init_db
 from src.python.models.evidence import Evidence
 from src.python.models.investigation import Investigation
@@ -21,6 +22,15 @@ from src.python.orchestrator import (
 )
 from src.python.tools.base import ToolBase
 from src.python.tools.clients import SearchBreachClient, SearchUsernameClient
+
+
+@pytest.fixture(autouse=True)
+def _isolated_playbook(tmp_path, monkeypatch):
+    """Keep post-run learning away from the checked-in playbook."""
+    path = tmp_path / "playbook.mdx"
+    path.write_text("---\nversion: \"1.0.0\"\n---\n\n# Playbook\n", encoding="utf-8")
+    monkeypatch.setattr(research_playbook, "RESEARCH_PLAYBOOK_PATH", path)
+    return path
 
 
 class StubTool(ToolBase):

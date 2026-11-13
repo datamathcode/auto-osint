@@ -4,7 +4,7 @@
 
 **Blocked by:** 09: Base LLM Orchestration Layer
 
-**Status:** ready-for-agent
+**Status:** COMPLETE
 
 - [ ] Backend WebSocket endpoint `/ws/investigation/<id>` for real-time streaming
 - [ ] Backend SSE endpoint `/sse/investigation/<id>` (alternative to WebSocket)
@@ -39,3 +39,30 @@
 - Messages are JSON: `{type, step, message, data, timestamp}`
 - Streaming stops when investigation completes or fails
 - Progress persists across page refreshes (optional enhancement)
+
+**Implementation summary:**
+- `src/python/events.py`: thread-safe `EventBus` with per-investigation
+  subscribers, 50-event replay for late subscribers, 200-event history, and
+  drop-on-full delivery so a slow consumer cannot block a run.
+- `Orchestrator` gained `event_sink` and emits: `investigation_started` (5%),
+  `plan_generated` (10%), `step_started`, `finding`, `step_finished`,
+  `confidence_updated`, `refinement` (95%), `investigation_complete` (100%).
+  A failing sink never breaks the run.
+- `src/python/routers/streaming.py`
+  - `GET /sse/investigation/{id}` — SSE with keep-alive comments, 404 for
+    unknown ids, ends on the terminal event.
+  - `WS /ws/investigation/{id}` — same stream over WebSocket with heartbeats.
+- `POST /api/orchestrate/async` (202) — starts the run in a background task on
+  its own session and returns the SSE/WS URLs.
+- `app/investigations/[id]/progress/page.tsx` — WebSocket client with
+  exponential-backoff reconnect (6 attempts), progress bar, timestamped status
+  log, step cards, and failure highlighting; the investigate form now routes
+  here when "run immediately" is checked.
+
+**Verification (2026-11-13):**
+- `tests/test_streaming.py` (12 tests): bus delivery/replay/unsubscribe/overflow,
+  full orchestrator event sequence with progress bounds (5→100), sink failure
+  isolation, 202 + completion, SSE payload parsing, 404 for unknown id, and
+  WebSocket delivery ending on the terminal event.
+- Full suite: 209 passed, ruff clean.
+- `tsc --noEmit` clean; `next build` emits `/investigations/[id]/progress`.

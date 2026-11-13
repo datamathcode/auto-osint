@@ -149,6 +149,7 @@ class Orchestrator:
         max_iterations: int = DEFAULT_MAX_ITERATIONS,
         playbook_loader: Callable[[], Dict[str, Any]] = load_playbook,
         reasoning_hook: Optional[Callable[[InvestigationPlan, Dict[str, Any], ReasoningState], None]] = None,
+        event_sink: Optional[Callable[[Dict[str, Any]], None]] = None,
     ):
         self.tools = tools
         self.session = session
@@ -157,6 +158,7 @@ class Orchestrator:
         self.max_iterations = max(1, max_iterations)
         self.playbook_loader = playbook_loader
         self.reasoning_hook = reasoning_hook
+        self.event_sink = event_sink
         self.state = ReasoningState()
 
         self._sink: Optional[_EvidenceSink] = None
@@ -172,6 +174,32 @@ class Orchestrator:
                     setter(session)
                 elif hasattr(tool, "save_to_database"):
                     tool.db_session = session
+
+    # -- progress events -------------------------------------------------
+
+    def _emit(
+        self,
+        event_type: str,
+        message: str,
+        step: Optional[str] = None,
+        data: Optional[Dict[str, Any]] = None,
+        progress: Optional[int] = None,
+    ) -> None:
+        """Publish a progress event when a sink is configured."""
+        if self.event_sink is None:
+            return
+        try:
+            self.event_sink(
+                {
+                    "type": event_type,
+                    "step": step,
+                    "message": message,
+                    "data": data or {},
+                    "progress": progress,
+                }
+            )
+        except Exception as exc:  # observability must never break the run
+            logger.warning(f"event sink failed: {exc}")
 
     # -- planning --------------------------------------------------------
 
@@ -272,6 +300,12 @@ class Orchestrator:
                 "error": "tool not registered",
                 "data": {},
             }
+        self._emit(
+            "step_started",
+            f"Executing {step.tool} on {step.target}",
+            step=step.tool,
+            data={"tool": step.tool, "target": step.target},
+        )
         try:
             return tool.execute(step.target)
         except Exception as exc:  # a crashing tool must not kill the run
@@ -355,6 +389,16 @@ class Orchestrator:
                     observation["result_error"] = str(exc)
 
         if claim_text:
+            self._emit(
+                "finding",
+                f"{tool_result.get('tool')} found: {claim_text[:120]}",
+                step=str(tool_result.get("tool") or ""),
+                data={
+                    "claim": claim_text,
+                    "source": tool_result.get("source"),
+                    "confidence": 0.6 if tool_result.get("status") == "success" else 0.3,
+                },
+            )
             observation["claim"] = claim_text
             self.state.findings.append(observation)
             if self._sink is not None:
@@ -373,6 +417,16 @@ class Orchestrator:
                 except Exception as exc:
                     logger.error(f"evidence storage failed: {exc}")
                     observation["evidence_error"] = str(exc)
+
+        self._emit(
+            "step_finished",
+            f"{tool_result.get('tool')} -> {tool_result.get('status')}",
+            step=str(tool_result.get("tool") or ""),
+            data={
+                "status": tool_result.get("status"),
+                "error": tool_result.get("error"),
+            },
+        )
 
         if tool_result.get("status") == "failed":
             self.state.gaps.append(
@@ -466,7 +520,19 @@ class Orchestrator:
 
     def run(self, claim: str, target: str) -> Dict[str, Any]:
         """Plan, execute, observe, and refine until iterations are exhausted."""
+        self._emit(
+            "investigation_started",
+            f"Investigation started for {target}",
+            data={"claim": claim, "target": target},
+            progress=5,
+        )
         plan = self.plan_investigation(claim, target)
+        self._emit(
+            "plan_generated",
+            f"Planned {len(plan.steps)} step(s) ({plan.claim_type})",
+            data={"claim_type": plan.claim_type, "steps": [step.as_dict() for step in plan.steps]},
+            progress=10,
+        )
         report: Dict[str, Any] = {}
 
         for iteration in range(1, self.max_iterations + 1):
@@ -482,11 +548,38 @@ class Orchestrator:
                 self.observe_tool_output(result)
 
             self.update_reasoning()
+            total_steps = max(1, report.get("summary", {}).get("steps", 1))
+            finished = self.state.iterations * total_steps
+            progress = min(95, 10 + int(80 * finished / (total_steps * self.max_iterations)))
+            self._emit(
+                "confidence_updated",
+                f"Confidence now {self.state.confidence:.2f}",
+                data={
+                    "confidence": round(self.state.confidence, 4),
+                    "findings": len(self.state.findings),
+                    "gaps": list(self.state.gaps),
+                },
+                progress=progress,
+            )
             if self.reasoning_hook:
                 self.reasoning_hook(plan, report, self.state)
 
             if not self.refine_plan(plan, report).steps:
                 break
+
+        refined = self.refine_plan(plan, report)
+        self._emit(
+            "refinement",
+            f"Refinement produced {len(refined.steps)} additional step(s)",
+            data={"steps": [step.as_dict() for step in refined.steps]},
+            progress=95,
+        )
+        self._emit(
+            "investigation_complete",
+            f"Investigation complete: {len(self.state.findings)} finding(s)",
+            data=self.state.as_dict(),
+            progress=100,
+        )
 
         return {
             "claim": claim,

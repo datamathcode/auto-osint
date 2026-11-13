@@ -5,12 +5,12 @@ rate limiting, and error handling.
 """
 
 import asyncio
+import logging
+import signal
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-import logging
-import signal
 
 from ..models.openosint_result import OpenOSINTResult
 
@@ -50,6 +50,7 @@ class ToolBase(ABC):
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.last_request_time = 0
+        self._request_times: List[float] = []
 
     @abstractmethod
     def execute(self, target: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -83,21 +84,21 @@ class ToolBase(ABC):
             return
 
         now = time.time()
-        # Reset rate limit window every minute
-        if now - self.last_request_time >= 60:
-            self.last_request_time = now
+        window_start = now - 60
 
-        elapsed_in_minute = now - self.last_request_time
-        requests_in_window = int(elapsed_in_minute * requests_per_minute / 60)
+        # Keep only requests inside the current 60 second window.
+        self._request_times = [t for t in self._request_times if t > window_start]
 
-        if requests_in_window >= requests_per_minute:
-            wait_time = 60 - elapsed_in_minute
+        if len(self._request_times) >= requests_per_minute:
+            oldest = min(self._request_times)
+            wait_time = 60 - (now - oldest)
             raise RateLimitError(
                 f"Rate limit exceeded. Waiting {wait_time:.1f}s until next window."
             )
 
-        logger.info(f"{self.name} rate limit check passed")
+        self._request_times.append(now)
         self.last_request_time = now
+        logger.info(f"{self.name} rate limit check passed")
 
     def _execute_with_timeout(self, coro) -> Dict[str, Any]:
         """

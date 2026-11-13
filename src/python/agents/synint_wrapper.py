@@ -5,13 +5,12 @@ This module provides a wrapper that executes SYNINT agents from the command line
 and stores results as evidence in the database.
 """
 
-import subprocess
 import json
 import logging
-from typing import Any, Dict, List, Optional
+import subprocess
+from typing import Any, Dict, List
 
 from ..agents.base import AgentBase
-from ..models.evidence import Evidence
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -139,7 +138,7 @@ class SYNINTAgentWrapper(AgentBase):
                 "observations": self.get_observation_buffer(),
             }
 
-    def _run_synint_agent(self, cmd: List[str]) -> Dict[str, str]:
+    def _run_synint_agent(self, cmd: List[str]) -> Dict[str, Any]:
         """
         Run SYNINT agent as a subprocess.
 
@@ -151,7 +150,8 @@ class SYNINTAgentWrapper(AgentBase):
 
         Raises:
             subprocess.TimeoutExpired: If execution times out
-            subprocess.CalledProcessError: If command fails
+            subprocess.CalledProcessError: If command fails with non-zero exit code
+            RuntimeError: For other subprocess errors
         """
         process = subprocess.Popen(
             cmd,
@@ -162,17 +162,29 @@ class SYNINTAgentWrapper(AgentBase):
 
         try:
             stdout, stderr = process.communicate(timeout=self.timeout_seconds)
-            return {
-                "stdout": stdout,
-                "stderr": stderr,
-                "returncode": process.returncode,
-            }
         except subprocess.TimeoutExpired:
             process.kill()
-            stdout, stderr = process.communicate()
-            raise TimeoutError(
-                f"SYNINT agent timed out after {self.timeout_seconds}s"
+            try:
+                stdout, stderr = process.communicate()
+            except Exception:  # cleanup only; the timeout is the real error
+                stdout, stderr = "", ""
+            raise subprocess.TimeoutExpired(
+                cmd[0], self.timeout_seconds, output=stdout, stderr=stderr
+            ) from None
+
+        # A non-zero exit code is a failed command. Raise so that
+        # _execute_with_retry retries it and so that failed output is never
+        # stored as successful evidence.
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(
+                process.returncode, cmd, output=stdout, stderr=stderr
             )
+
+        return {
+            "stdout": stdout,
+            "stderr": stderr,
+            "returncode": process.returncode,
+        }
 
     def _parse_synint_result(self, result: Dict[str, str]) -> Dict[str, Any]:
         """

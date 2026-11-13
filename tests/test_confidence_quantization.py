@@ -5,17 +5,18 @@ Tests verify that placeholder functions log the expected messages
 to stderr rather than attempting to compute confidence.
 """
 
-import pytest
 import io
 import sys
 from unittest.mock import patch
 
+import pytest
+
 from src.python.confidence_quantization import (
-    quantify_confidence,
     calculate_bayesian_posterior,
     calculate_independence_score,
     classify_confidence_score,
     estimate_source_quality,
+    quantify_confidence,
     quantize_confidence,
 )
 
@@ -123,18 +124,18 @@ class TestConfidenceQuantificationPlaceholder:
             assert "CONFIDENCE NOT YET IMPLEMENTED" in stderr_output
 
     def test_all_functions_return_zero_values(self):
-        """Test that all functions return zero values as placeholders."""
-        functions_to_test = [
-            lambda: quantify_confidence(0.5, 0.7, "test"),
-            lambda: calculate_bayesian_posterior(0.5, 0.7, 0.8),
-            lambda: calculate_independence_score(True, False, False, False),
-            lambda: estimate_source_quality("news", True),
+        """Test that the placeholder functions return their documented values."""
+        cases = [
+            (lambda: quantify_confidence(0.5, 0.7, "test"), 0.0),
+            (lambda: calculate_bayesian_posterior(0.5, 0.7, 0.8), 0.0),
+            (lambda: calculate_independence_score(True, False, False, False), 0.5),
+            (lambda: estimate_source_quality("news", True), 0.5),
         ]
-        
-        for func in functions_to_test:
+
+        for func, expected in cases:
             with patch('sys.stderr', new_callable=io.StringIO) as mock_stderr:
                 result = func()
-                assert result == 0.0
+                assert result == expected
                 stderr_output = mock_stderr.getvalue()
                 assert "CONFIDENCE NOT YET IMPLEMENTED" in stderr_output
 

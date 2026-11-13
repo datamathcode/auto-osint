@@ -3,7 +3,8 @@ Tool registry for auto-osint.
 Provides registry pattern for tool discovery and management.
 """
 
-from typing import Dict, List, Type, Optional
+from typing import Dict, List, Optional, Type
+
 from .base import ToolBase
 
 
@@ -117,7 +118,7 @@ def _auto_register_tools():
     Auto-register all tools that inherit from ToolBase.
     This function is called when the module is imported.
     """
-    for tool_name in ToolRegistry.list_tools():
+    for _tool_name in ToolRegistry.list_tools():
         # The actual registration happens when individual tools are imported
         # This is just a placeholder for the pattern
         pass

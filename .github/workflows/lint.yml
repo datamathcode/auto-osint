@@ -23,15 +23,15 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy || echo "linting tools not available - skipping"
+          pip install -e ".[dev]"
 
       - name: Lint with ruff
         run: |
-          ruff check src/python/ tests/ || echo "ruff check failed - but linting not available"
+          ruff check src/python/ tests/
 
       - name: Type check with mypy
         run: |
-          mypy src/python/ --ignore-missing-imports || echo "mypy not available - skipping type checking"
+          mypy src/python/ --ignore-missing-imports
         continue-on-error: true
 
   lint-markdown:

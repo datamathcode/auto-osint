@@ -8,9 +8,9 @@ This follows the "expand-then-migrate" pattern.
 This module should be importable but not yet integrated with agent workflows.
 """
 
-import sys
 import logging
-from typing import Dict, Any, List, Optional
+import sys
+from typing import Any, Dict
 
 # Configure logging to write to stderr for compatibility with unit tests
 logging.basicConfig(

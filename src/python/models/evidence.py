@@ -2,9 +2,10 @@
 Evidence model for auto-osint.
 """
 
-from sqlalchemy import Column, Integer, Text, DateTime, Float, JSON, ForeignKey
-from sqlalchemy.ext.declarative import declarative_base
 from datetime import datetime
+
+from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, Text
+from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
 

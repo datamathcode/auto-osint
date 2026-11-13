@@ -1,0 +1,129 @@
+---
+version: "0.1.0"
+last_updated: "2026-11-13"
+description: "Research playbook with tool suggestions, questioning strategies, and depth rules by claim type."
+funding:
+  suggested_tools:
+    - SEC filings
+    - corporate registries
+    - bankruptcy filings
+    - tax authority filings
+  strategies:
+    - Follow SEC Form 10-K for company financials
+    - Use corporate registry for ownership structure
+    - Search bankruptcy filings for financial distress
+  questioning_strategies:
+    - Ask about the source of funding
+    - Verify legitimacy of the entity
+    - Check for financial relationships with targets
+    - Identify any conflicts of interest
+  depth_escalation_rules:
+    low_confidence: 1
+    medium_confidence: 2
+    high_confidence: 3
+  confidence_thresholds:
+    start: 0.4
+    continue: 0.6
+    final: 0.6
+intellectual_property:
+  suggested_tools:
+    - USPTO database
+    - WIPO trademark database
+    - ESPA database
+  strategies:
+    - Search USPTO for patent applications
+    - Check WIPO for international trademarks
+    - Review ESPA for registered marks
+default_questioning_strategies:
+  - Ask who benefits from the claim
+  - Check funding sources for the publisher
+  - Identify conflicts of interest
+  - Ask what primary document would settle the claim
+default_quoting_strategies:
+  - Always include source link
+  - Quote verbatim from primary sources
+  - Provide context for quotes
+  - Distinguish between opinion and fact
+default_depth_escalation_rules:
+  low_confidence: 1
+  medium_confidence: 2
+  high_confidence: 3
+default_confidence_thresholds:
+  start: 0.5
+  continue: 0.7
+  final: 0.9
+---
+
+# Research Playbook for Auto-OSINT
+
+## Overview
+
+This playbook provides research strategies and tool recommendations for different types of claims. The playbook evolves as the agent learns from investigation outcomes.
+
+The YAML front matter above is the machine-readable source of truth: `src/python/research_playbook.py` loads it with `frontmatter.load()` and `get_tool_suggestions()` reads the `suggested_tools` list for a claim type.
+
+## Playbook Sections
+
+### Funding Claims
+
+**Suggested Tools:**
+- [SEC Filings](https://sec.gov/edgar/search/) - Corporate financial disclosures
+- [Corporate Registries](https://www.opencorporates.com/) - Business registration data
+- [Bankruptcy Filings](https://www.justice.gov/ust) - Financial distress indicators
+- [Tax Authority Filings](https://www.irs.gov/) - Tax liability information
+
+**Default Questioning Strategies:**
+1. Ask about the source of funding
+2. Verify legitimacy of the entity
+3. Check for financial relationships with targets
+4. Identify any conflicts of interest
+
+**Default Depth Escalation Rules:**
+- Phase 1: Public filings and registries (quick scan)
+- Phase 2: Financial statements and tax records (detailed analysis)
+- Phase 3: Third-party verification (expert opinion if needed)
+
+**Default Confidence Thresholds:**
+- **Low Confidence (< 0.4):** No direct evidence of funding
+- **Medium Confidence (0.4 - 0.6):** Inferences from public data
+- **High Confidence (> 0.6):** Direct financial records
+
+### Intellectual Property Claims
+
+**Suggested Tools:**
+- [USPTO](https://www.uspto.gov/) - Patent and trademark records
+- [WIPO](https://www.wipo.int/branddb/en/) - International trademark database
+- [ESPA](https://www.euipo.europa.eu/) - European registered marks
+
+## Future Playbook Sections
+
+The following sections will be added as the agent learns:
+
+### Organization Ties
+- Corporate ownership structures
+- Board membership patterns
+- Shared resources and affiliations
+
+### Personal Relationships
+- Family connections
+- Social network analysis
+- Historical associations
+
+### Promotional Content
+- Published articles and commentary
+- Social media presence
+- Public statements and endorsements
+
+## Playbook Version History
+
+| Version | Date | Changes |
+|---------|------|---------|
+| 0.1.0 | 2026-11-13 | Initial version with funding section |
+
+## Contributing to the Playbook
+
+When the agent completes an investigation, it can suggest additions or improvements to this playbook. These suggestions should be reviewed before being integrated.
+
+---
+
+**Note:** This playbook is a living document that grows as the agent gains experience with different types of claims.

@@ -5,8 +5,13 @@ Database engine, session factory, and FastAPI dependency.
 import os
 from typing import Generator
 
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+
+# Load .env before any URL is resolved, so setup scripts and the API agree on
+# which database they are talking to.
+load_dotenv()
 
 DEFAULT_DATABASE_URL = "sqlite:///./data/auto_osint.db"
 

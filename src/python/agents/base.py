@@ -54,16 +54,21 @@ class AgentBase(ABC):
         """Set the module used to compute confidence and independence scores."""
         self.confidence_module = module
 
-    def _score_from_module(self, claim: str) -> Dict[str, float]:
+    def _score_from_module(
+        self, claim: str, independence_check_details: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, float]:
         """
         Compute confidence and independence from the configured module.
 
-        Falls back to the neutral 0.5/0.5 values when no module is set or the
-        module raises, so evidence storage never fails on scoring.
+        The supplied independence flags are passed through, so a source that
+        declares a financial interest is not scored as independent. Falls back
+        to 0.5/0.5 when no module is set or the module raises, so evidence
+        storage never fails on scoring.
         """
         if self.confidence_module is None:
             return {"confidence": 0.5, "independence_score": 0.5}
 
+        flags = independence_check_details or {}
         try:
             confidence = float(
                 self.confidence_module.quantify_confidence(
@@ -72,10 +77,10 @@ class AgentBase(ABC):
             )
             independence = float(
                 self.confidence_module.calculate_independence_score(
-                    financial_interest=False,
-                    organizational_tie=False,
-                    personal_relationship=False,
-                    promotional_purpose=False,
+                    financial_interest=bool(flags.get("financial_interest", False)),
+                    organizational_tie=bool(flags.get("organizational_tie", False)),
+                    personal_relationship=bool(flags.get("personal_relationship", False)),
+                    promotional_purpose=bool(flags.get("promotional_purpose", False)),
                 )
             )
         except Exception as exc:  # scoring must not block evidence storage
@@ -188,7 +193,7 @@ class AgentBase(ABC):
             raise ValueError("Evidence storage not initialized. Call set_evidence_storage() first.")
 
         if confidence is None or independence_score is None:
-            scored = self._score_from_module(claim)
+            scored = self._score_from_module(claim, independence_check_details)
             confidence = scored["confidence"] if confidence is None else confidence
             independence_score = (
                 scored["independence_score"]

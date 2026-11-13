@@ -5,8 +5,9 @@ Provides common methods for agent execution, observation, evidence storage, and 
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 import logging
+import time
 
 from ..models.evidence import Evidence
 
@@ -44,6 +45,47 @@ class AgentBase(ABC):
         self.max_retries = max_retries
         self.evidence_storage: Optional[Any] = None
         self.observation_buffer: List[Dict[str, Any]] = []
+
+    def _execute_with_retry(
+        self,
+        func: Callable[[], Dict[str, Any]],
+        max_retries: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        Execute a function with automatic retry on failure.
+
+        Args:
+            func: Function to execute
+            max_retries: Override of default max_retries (defaults to self.max_retries)
+
+        Returns:
+            Dict with stdout, stderr, returncode from the executed function
+
+        Raises:
+            Exception: If all retry attempts fail
+        """
+        if max_retries is None:
+            max_retries = self.max_retries
+
+        attempt = 0
+        last_error = None
+
+        while attempt <= max_retries:
+            try:
+                return func()
+            except Exception as e:
+                last_error = e
+                attempt += 1
+                if attempt <= max_retries:
+                    logger.warning(
+                        f"{self.name}: Attempt {attempt}/{max_retries} failed: {e}. Retrying..."
+                    )
+                    time.sleep(1)  # Brief delay between retries
+
+        logger.error(f"{self.name}: All {max_retries} retries failed.")
+        if last_error:
+            raise last_error
+        raise RuntimeError(f"{self.name}: All {max_retries} retry attempts exhausted without exception")
 
     @abstractmethod
     def execute(self, context: Dict[str, Any]) -> Dict[str, Any]:

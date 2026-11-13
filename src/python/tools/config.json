@@ -5,6 +5,21 @@
       "module": "src.python.tools.examples.mock_tool",
       "class": "MockDomainLookupTool",
       "description": "Deterministic domain lookup tool for testing"
+    },
+    "SearchUsernameClient": {
+      "module": "src.python.tools.clients.search_username",
+      "class": "SearchUsernameClient",
+      "description": "Username lookup across public sites (sherlock or equivalent)"
+    },
+    "SearchEmailClient": {
+      "module": "src.python.tools.clients.search_email",
+      "class": "SearchEmailClient",
+      "description": "Email registration lookup (holehe or equivalent)"
+    },
+    "SearchBreachClient": {
+      "module": "src.python.tools.clients.search_breach",
+      "class": "SearchBreachClient",
+      "description": "Breach lookup for an email address (Have I Been Pwned v3)"
     }
   }
 }

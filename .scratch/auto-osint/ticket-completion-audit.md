@@ -1,5 +1,8 @@
 # Ticket completion audit — 2026-11-13
 
+> **Update (same day):** the gaps below were remediated. See
+> "Remediation" at the end of this file for commits and re-verification.
+
 Scope: verify that tickets marked COMPLETE actually meet their own acceptance
 criteria. Method: read each ticket, then exercise the claimed artifact
 (import, run, or test) rather than trusting the checkbox.
@@ -98,3 +101,27 @@ write path breaks until the models share one `Base`.
 4. Either wire `AgentBase.store_evidence` to `confidence_quantization` and add
    a real `Investigation` integration test, or retitle Ticket 04's remaining
    checkboxes as future work.
+
+## Remediation (2026-11-13, after the audit)
+
+| Finding | Status | Where |
+|---|---|---|
+| Backend cannot import (missing routers) | FIXED | `src/python/routers/{investigations,dossiers,evidence}.py`, `main.py` — 9 API tests |
+| `setup_database` multi-statement crash | FIXED | `src/python/scripts/setup_database.py` uses `init_db()`; verified with a temp DB |
+| Three `declarative_base()` objects | FIXED | `src/python/models/base.py`; `Base.metadata.create_all()` works |
+| Registry config points at `auto_osint` | FIXED | `importlib.import_module` + `src.python.*` paths; registry tests |
+| No CLI on the SYNINT wrapper | FIXED | `main()` + `scripts/agents/*.sh` + console script; CLI tests |
+| AgentBase never used the confidence module | FIXED | `confidence_module` + `set_confidence_module()`; scored in `store_evidence()` |
+| No SQLite→PostgreSQL transfer | FIXED | `transfer_evidence()` + `migrate-evidence` CLI |
+| No investigation integration test | FIXED | `tests/test_integration_investigation.py` |
+| Ticket 06 status stale | FIXED | ticket file set to COMPLETE |
+
+Ticket statuses now: 01–07 COMPLETE, 08–18 ready-for-agent.
+
+Re-verification at release: **90 tests pass**, ruff clean, CI green on
+Python 3.10 and 3.11. Released through PR #6 (tickets 01–06) and PR #8
+(ticket 07).
+
+Remaining known limitation: evidence storage is PostgreSQL-capable through
+`DATABASE_URL`, but no PostgreSQL server is configured in this environment, so
+all runs and tests use SQLite.

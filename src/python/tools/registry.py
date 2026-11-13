@@ -3,6 +3,7 @@ Tool registry for auto-osint.
 Provides registry pattern for tool discovery and management.
 """
 
+import importlib
 from typing import Dict, List, Optional, Type
 
 from .base import ToolBase
@@ -97,9 +98,8 @@ class ToolRegistry:
                 raise ValueError(f"Invalid tool config for {tool_name}: missing module or class")
 
             try:
-                # Dynamically import the module
-                parts = module_path.split(".")
-                module = __import__(".".join(parts[:-1]), fromlist=[parts[-1]])
+                # Import the module named in the config, then read the class.
+                module = importlib.import_module(module_path)
                 tool_class = getattr(module, class_name)
 
                 # Register the tool

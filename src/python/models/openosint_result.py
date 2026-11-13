@@ -5,9 +5,8 @@ OpenOSINT results model for auto-osint.
 from datetime import datetime
 
 from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, Text
-from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+from .base import Base
 
 
 class OpenOSINTResult(Base):

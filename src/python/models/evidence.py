@@ -5,9 +5,8 @@ Evidence model for auto-osint.
 from datetime import datetime
 
 from sqlalchemy import JSON, Column, DateTime, Float, ForeignKey, Integer, Text
-from sqlalchemy.ext.declarative import declarative_base
 
-Base = declarative_base()
+from .base import Base
 
 
 class Evidence(Base):
@@ -25,5 +24,6 @@ class Evidence(Base):
     contradictions = Column(JSON, nullable=True)  # List of evidence IDs
     links = Column(JSON, nullable=True)  # List of URLs or file paths
     chain_of_custody = Column(JSON, nullable=True)  # Immutable log of evidence collection
+    raw_text = Column(Text, nullable=True)  # Unparsed tool output, kept for debugging
 
     investigation_id = Column(Integer, ForeignKey("investigation.id"), nullable=False)

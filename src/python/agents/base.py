@@ -29,6 +29,7 @@ class AgentBase(ABC):
         investigation_id: int,
         timeout_seconds: Optional[int] = 60,
         max_retries: int = 3,
+        confidence_module: Optional[Any] = None,
     ):
         """
         Initialize the agent.
@@ -38,13 +39,55 @@ class AgentBase(ABC):
             investigation_id: Associated investigation ID
             timeout_seconds: Maximum execution time for tool invocations
             max_retries: Maximum number of retry attempts for failed operations
+            confidence_module: Optional module with quantify_confidence() and
+                calculate_independence_score(); used when a caller omits scores
         """
         self.name = name
         self.investigation_id = investigation_id
         self.timeout_seconds = timeout_seconds
         self.max_retries = max_retries
+        self.confidence_module = confidence_module
         self.evidence_storage: Optional[Any] = None
         self.observation_buffer: List[Dict[str, Any]] = []
+
+    def set_confidence_module(self, module: Any) -> None:
+        """Set the module used to compute confidence and independence scores."""
+        self.confidence_module = module
+
+    def _score_from_module(
+        self, claim: str, independence_check_details: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, float]:
+        """
+        Compute confidence and independence from the configured module.
+
+        The supplied independence flags are passed through, so a source that
+        declares a financial interest is not scored as independent. Falls back
+        to 0.5/0.5 when no module is set or the module raises, so evidence
+        storage never fails on scoring.
+        """
+        if self.confidence_module is None:
+            return {"confidence": 0.5, "independence_score": 0.5}
+
+        flags = independence_check_details or {}
+        try:
+            confidence = float(
+                self.confidence_module.quantify_confidence(
+                    prior_probability=0.5, likelihood=0.7, evidence=claim
+                )
+            )
+            independence = float(
+                self.confidence_module.calculate_independence_score(
+                    financial_interest=bool(flags.get("financial_interest", False)),
+                    organizational_tie=bool(flags.get("organizational_tie", False)),
+                    personal_relationship=bool(flags.get("personal_relationship", False)),
+                    promotional_purpose=bool(flags.get("promotional_purpose", False)),
+                )
+            )
+        except Exception as exc:  # scoring must not block evidence storage
+            logger.warning(f"{self.name}: confidence module failed ({exc}); using defaults")
+            return {"confidence": 0.5, "independence_score": 0.5}
+
+        return {"confidence": confidence, "independence_score": independence}
 
     def _execute_with_retry(
         self,
@@ -119,8 +162,8 @@ class AgentBase(ABC):
         self,
         source: str,
         claim: str,
-        confidence: float,
-        independence_score: float,
+        confidence: Optional[float] = None,
+        independence_score: Optional[float] = None,
         independence_check_details: Optional[Dict[str, Any]] = None,
         corroborating_sources: Optional[List[int]] = None,
         contradictions: Optional[List[int]] = None,
@@ -133,8 +176,10 @@ class AgentBase(ABC):
         Args:
             source: Source identifier (type, platform, document)
             claim: The finding or claim
-            confidence: Confidence score (0.0-1.0, Bayesian posterior)
-            independence_score: Independence score (0.0-1.0)
+            confidence: Confidence score (0.0-1.0). When omitted, the configured
+                confidence module scores the claim (0.5 without a module).
+            independence_score: Independence score (0.0-1.0). Omitted behaves
+                like confidence.
             independence_check_details: Details of independence tests
             corroborating_sources: List of corroborating evidence IDs
             contradictions: List of contradictory evidence IDs
@@ -146,6 +191,15 @@ class AgentBase(ABC):
         """
         if self.evidence_storage is None:
             raise ValueError("Evidence storage not initialized. Call set_evidence_storage() first.")
+
+        if confidence is None or independence_score is None:
+            scored = self._score_from_module(claim, independence_check_details)
+            confidence = scored["confidence"] if confidence is None else confidence
+            independence_score = (
+                scored["independence_score"]
+                if independence_score is None
+                else independence_score
+            )
 
         evidence = Evidence(
             source=source,

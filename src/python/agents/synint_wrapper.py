@@ -8,7 +8,7 @@ and stores results as evidence in the database.
 import json
 import logging
 import subprocess
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from ..agents.base import AgentBase
 
@@ -236,3 +236,83 @@ class SYNINTAgentWrapper(AgentBase):
         """
         super().set_evidence_storage(storage)
         self.db_session = storage  # Store for use in save_to_database
+
+
+def main(argv: Optional[List[str]] = None) -> int:
+    """
+    Run one SYNINT agent from the command line and store its evidence.
+
+    Returns process exit status: 0 on success, 1 on failure.
+    """
+    import argparse
+    import os
+
+    from sqlalchemy.orm import sessionmaker
+
+    from ..database import create_db_engine, init_db
+    from ..models.investigation import Investigation
+
+    parser = argparse.ArgumentParser(
+        prog="synint-wrapper",
+        description="Execute a SYNINT agent and store its findings as evidence.",
+    )
+    parser.add_argument("--synint-path", required=True, help="Path to the SYNINT binary")
+    parser.add_argument("--agent", default="WhoisAgent", help="SYNINT agent name")
+    parser.add_argument("--target", required=True, help="Investigation target")
+    parser.add_argument("--stage", default="standard", help="SYNINT stage")
+    parser.add_argument(
+        "--investigation-id", type=int, default=None, help="Existing investigation ID"
+    )
+    parser.add_argument(
+        "--db-url",
+        default=None,
+        help="Database URL (defaults to DATABASE_URL or the local SQLite file)",
+    )
+    parser.add_argument("--timeout", type=int, default=300, help="Per-run timeout (s)")
+    parser.add_argument("--max-retries", type=int, default=2, help="Retry attempts")
+    args = parser.parse_args(argv)
+
+    url = args.db_url or os.getenv("DATABASE_URL")
+    engine = create_db_engine(url)
+    init_db(engine)
+    session = sessionmaker(bind=engine, expire_on_commit=False)()
+
+    try:
+        investigation_id = args.investigation_id
+        if investigation_id is None:
+            investigation = Investigation(
+                target_name=args.target,
+                claim_under_investigation=f"SYNINT {args.agent} run for {args.target}",
+                status="in_progress",
+            )
+            session.add(investigation)
+            session.commit()
+            investigation_id = investigation.id
+        elif session.get(Investigation, investigation_id) is None:
+            print(f"Investigation {investigation_id} not found")
+            return 1
+
+        wrapper = SYNINTAgentWrapper(
+            synint_path=args.synint_path,
+            name=args.agent,
+            investigation_id=investigation_id,
+            timeout_seconds=args.timeout,
+            max_retries=args.max_retries,
+        )
+        wrapper.set_evidence_storage(session)
+
+        result = wrapper.execute(
+            {
+                "agent_name": args.agent,
+                "target": args.target,
+                "stage": args.stage,
+            }
+        )
+        print(json.dumps(result, indent=2, default=str))
+        return 0 if result.get("status") == "success" else 1
+    finally:
+        session.close()
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

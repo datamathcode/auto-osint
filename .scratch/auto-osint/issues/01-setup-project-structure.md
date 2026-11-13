@@ -4,7 +4,7 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** COMPLETE
 
 | - [x] Next.js or Vite project initialized with TypeScript
 | - [x] Python backend (FastAPI) with async tool execution
@@ -26,3 +26,14 @@
 - Database: SQLite by default (`data/auto_osint.db`), PostgreSQL support configured
 - Tech stack: Next.js 14, React 18, TypeScript 5, Tailwind CSS 3, FastAPI, SQLAlchemy
 - Setup script: `src/python/scripts/setup_database.py` for database initialization
+
+**Verification (2026-11-13):**
+- `from src.python.main import app` imports and exposes `/health`,
+  `/api/investigations` (POST/GET/PATCH), `/api/investigations/{id}/evidence`,
+  and `/api/dossiers/{id}` — 9 API tests pass in `tests/test_api.py`.
+- `python -m src.python.scripts.setup_database` creates
+  `evidence`, `investigation`, and `openosint_results` from the shared
+  `src/python/models/base.Base` metadata.
+- `npx next build` compiles and prerenders 4 routes (enforced in CI).
+- Note: `npm run dev:backend` calls `uv run uvicorn`; `uv` must be installed
+  locally, otherwise run `python -m src.python.main`.

@@ -53,3 +53,8 @@ data/*.db-journal
 
 # Scratch files (except tickets)
 .scratch/!/auto-osint/issues/
+
+# Python build artifacts
+*.egg-info/
+build/
+dist/

@@ -24,3 +24,6 @@ pydantic-settings>=2.1.0
 
 # Utilities
 python-dotenv>=1.0.0
+
+# Playbook parsing
+python-frontmatter>=1.0.0

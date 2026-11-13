@@ -13,7 +13,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <footer className="mt-10 border-t p-6 text-xs text-gray-500">
+          <strong>Responsible use:</strong> this tool automates open-source
+          intelligence collection. Use it only for lawful, authorised
+          investigations, respect platform terms of service, and never to
+          profile private individuals or minors. Findings are machine-generated
+          leads, not verified facts.
+        </footer>
+      </body>
     </html>
   )
 }

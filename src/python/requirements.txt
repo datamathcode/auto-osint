@@ -1,0 +1,26 @@
+# FastAPI and ASGI server
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+websockets==12.0
+
+# Database
+sqlalchemy==2.0.23
+alembic==1.12.1
+
+# Async tool execution
+asyncio>=3.4.3
+aiohttp>=3.9.0
+
+# LLM orchestration
+langchain>=0.1.0
+langchain-openai>=0.0.5
+
+# HTTP clients for OSINT tools
+requests>=2.31.0
+
+# Error handling
+pydantic>=2.5.0
+pydantic-settings>=2.1.0
+
+# Utilities
+python-dotenv>=1.0.0

@@ -22,6 +22,8 @@ auto-osint is an autonomous OSINT research agent that recursively investigates c
    ```bash
    git clone https://github.com/datamathcode/auto-osint.git
    cd auto-osint
+   npm install
+   uv pip install -r src/python/requirements.txt
    ```
 
 2. **Set up environment variables**:
@@ -32,16 +34,16 @@ auto-osint is an autonomous OSINT research agent that recursively investigates c
 
 3. **Initialize database**:
    ```bash
-   ./scripts/setup.sh
+   uv run python src/python/scripts/setup_database.py
    ```
 
 4. **Start the application**:
    ```bash
-   # Backend
-   uv run dev
-   
-   # Frontend
-   npm run dev
+   # Terminal 1: Frontend
+   npm run dev:frontend
+
+   # Terminal 2: Backend
+   npm run dev:backend
    ```
 
 5. **Run an investigation**:
@@ -54,8 +56,8 @@ auto-osint is an autonomous OSINT research agent that recursively investigates c
 
 - [Design Document](docs/superpowers/specs/2026-11-12-auto-osint-design.md)
 - [Setup Guide](docs/setup.md)
-- [Configuration Guide](docs/configuration.md)
-- [API Reference](docs/api.md)
+- [AGENTS.md](AGENTS.md) - AI agent conventions
+- [Ticket 01](scratch/auto-osint/issues/01-setup-project-structure.md) - Project setup details
 
 ## Tech Stack
 

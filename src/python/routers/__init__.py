@@ -4,6 +4,7 @@ API routers for auto-osint backend.
 
 from . import (
     audit,
+    config,
     dossiers,
     evidence,
     graph,
@@ -22,4 +23,5 @@ __all__ = [
     "timeline",
     "graph",
     "audit",
+    "config",
 ]

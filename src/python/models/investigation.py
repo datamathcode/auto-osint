@@ -26,6 +26,7 @@ class Investigation(Base):
     investigation_notes = Column(Text, nullable=True)
     playbook_update = Column(Text, nullable=True)  # Reference to playbook version
     audit_report = Column(JSON, nullable=True)  # Latest self-audit report
+    scope = Column(JSON, nullable=True)  # Requested scope: dates, platforms, data types, budget
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     completed_at = Column(DateTime, nullable=True)

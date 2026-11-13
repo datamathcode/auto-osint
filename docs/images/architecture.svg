@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="560" viewBox="0 0 1180 560" role="img" aria-labelledby="title desc">
+  <title id="title">auto-osint investigation pipeline</title>
+  <desc id="desc">Diagram: an investigation form creates a run, the orchestrator plans, executes tools, observes results and refines, tools cover OpenOSINT clients and SYNINT agents, findings land in an evidence store, the dossier reports verdict, confidence, timeline, graph and gaps, and lessons feed back into the research playbook.</desc>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrow-loop" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/>
+    </marker>
+    <style>
+      .box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; }
+      .box-accent { fill: #eff6ff; stroke: #93c5fd; stroke-width: 1.4; }
+      .box-dossier { fill: #ecfdf5; stroke: #6ee7b7; stroke-width: 1.4; }
+      .box-learn { fill: #f5f3ff; stroke: #c4b5fd; stroke-width: 1.4; stroke-dasharray: 5 4; }
+      .inner { fill: #ffffff; stroke: #dbeafe; stroke-width: 1; }
+      .t { font-family: ui-sans-serif, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; fill: #0f172a; }
+      .h { font-size: 13px; font-weight: 600; }
+      .s { font-size: 10.5px; fill: #64748b; }
+      .m { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9.5px; fill: #475569; }
+      .kicker { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; fill: #64748b; font-weight: 600; }
+      .flow { stroke: #94a3b8; stroke-width: 1.6; fill: none; marker-end: url(#arrow); }
+      .loop { stroke: #7c3aed; stroke-width: 1.4; fill: none; stroke-dasharray: 6 4; marker-end: url(#arrow-loop); }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1180" height="560" fill="#ffffff"/>
+  <rect x="0.5" y="0.5" width="1179" height="559" fill="none" stroke="#e2e8f0"/>
+
+  <text class="t" x="28" y="38" style="font-size:16px;font-weight:700">auto-osint — one investigation, end to end</text>
+  <text class="t s" x="28" y="57">Deterministic orchestration, bounded collection, every claim traceable to a stored source.</text>
+
+  <!-- Column 1: entry points -->
+  <rect class="box" x="28" y="88" width="270" height="112" rx="8"/>
+  <text class="t h" x="44" y="114">Investigate form</text>
+  <text class="t s" x="44" y="132">target · claim · scope · time budget</text>
+  <text class="t m" x="44" y="152">POST /api/investigations</text>
+  <text class="t m" x="44" y="166">POST /api/orchestrate/async</text>
+  <text class="t m" x="44" y="184" style="fill:#2563eb">→ 202 with stream URLs</text>
+
+  <rect class="box" x="28" y="222" width="270" height="96" rx="8"/>
+  <text class="t h" x="44" y="248">Progress pages</text>
+  <text class="t s" x="44" y="266">live status log, auto-reconnect</text>
+  <text class="t m" x="44" y="286">GET /sse/investigation/{id}</text>
+  <text class="t m" x="44" y="300">WS /ws/investigation/{id}</text>
+
+  <!-- Column 2: orchestrator -->
+  <rect class="box-accent" x="344" y="88" width="440" height="230" rx="8"/>
+  <text class="t h" x="360" y="114">Orchestrator</text>
+  <text class="t s" x="360" y="131">no LLM required — reasoning_hook is the attach point</text>
+
+  <rect class="inner" x="360" y="144" width="196" height="66" rx="6"/>
+  <text class="t h" x="374" y="166" style="font-size:11.5px">1 · Plan</text>
+  <text class="t s" x="374" y="182">classify claim + target</text>
+  <text class="t s" x="374" y="196">pick tools from playbook</text>
+
+  <rect class="inner" x="572" y="144" width="196" height="66" rx="6"/>
+  <text class="t h" x="586" y="166" style="font-size:11.5px">2 · Execute</text>
+  <text class="t s" x="586" y="182">parallel pool, max 8</text>
+  <text class="t s" x="586" y="196">timeout + rate limit per tool</text>
+
+  <rect class="inner" x="360" y="222" width="196" height="66" rx="6"/>
+  <text class="t h" x="374" y="244" style="font-size:11.5px">3 · Observe</text>
+  <text class="t s" x="374" y="260">store result, score evidence</text>
+  <text class="t s" x="374" y="274">update confidence + gaps</text>
+
+  <rect class="inner" x="572" y="222" width="196" height="66" rx="6"/>
+  <text class="t h" x="586" y="244" style="font-size:11.5px">4 · Refine</text>
+  <text class="t s" x="586" y="260">escalate when findings thin</text>
+  <text class="t s" x="586" y="274">up to 2 passes by default</text>
+
+  <!-- Column 3: tools -->
+  <rect class="box" x="828" y="88" width="324" height="112" rx="8"/>
+  <text class="t h" x="844" y="114">OpenOSINT clients</text>
+  <text class="t s" x="844" y="131">subprocess wrappers, missing binary = gap</text>
+  <text class="t m" x="844" y="152">search_username · sherlock</text>
+  <text class="t m" x="844" y="167">search_email · holehe</text>
+  <text class="t m" x="844" y="182">search_breach · HIBP</text>
+
+  <rect class="box" x="828" y="216" width="324" height="102" rx="8"/>
+  <text class="t h" x="844" y="242">SYNINT agents</text>
+  <text class="t s" x="844" y="259">staged shell collection via synint-wrapper</text>
+  <text class="t m" x="844" y="280">whois · dns-enum · metadata-extraction</text>
+  <text class="t m" x="844" y="295">retries, per-run timeout, evidence stored</text>
+
+  <!-- Flow arrows, top row -->
+  <path class="flow" d="M 298 144 L 338 144"/>
+  <path class="flow" d="M 784 144 L 822 144"/>
+  <path class="flow" d="M 828 252 L 792 252"/>
+  <path class="flow" d="M 298 270 L 320 270 L 320 300 L 360 300 L 360 288"/>
+
+  <!-- Divider -->
+  <line x1="28" y1="352" x2="1152" y2="352" stroke="#e2e8f0" stroke-width="1"/>
+
+  <!-- Evidence store -->
+  <rect class="box" x="28" y="378" width="286" height="112" rx="8"/>
+  <text class="t h" x="44" y="404">Evidence store</text>
+  <text class="t s" x="44" y="422">append-only, one row per finding</text>
+  <text class="t m" x="44" y="443">claim · source · confidence</text>
+  <text class="t m" x="44" y="458">independence · contradictions</text>
+  <text class="t m" x="44" y="473">chain of custody · raw output</text>
+
+  <!-- Dossier -->
+  <rect class="box-dossier" x="356" y="378" width="500" height="112" rx="8"/>
+  <text class="t h" x="372" y="404">Dossier — compiled read model</text>
+  <text class="t s" x="372" y="422">nothing is generated that cannot be traced to a stored row</text>
+  <text class="t m" x="372" y="444">verdict · high / medium / low confidence counters</text>
+  <text class="t m" x="372" y="459">timeline · temporal contradictions · entity graph</text>
+  <text class="t m" x="372" y="474">gaps · missing sources · unqueried tools · improvement log</text>
+
+  <!-- Learning loop -->
+  <rect class="box-learn" x="898" y="378" width="254" height="112" rx="8"/>
+  <text class="t h" x="914" y="404" style="fill:#6d28d9">Playbook update</text>
+  <text class="t s" x="914" y="422">lessons_learned_&lt;timestamp&gt;</text>
+  <text class="t s" x="914" y="441">appended to research_playbook.mdx</text>
+  <text class="t s" x="914" y="460">tool order changes next run</text>
+  <text class="t m" x="914" y="478" style="fill:#7c3aed">GET /api/dossiers/{id}/playbook-update</text>
+
+  <!-- Bottom arrows -->
+  <path class="flow" d="M 314 434 L 350 434"/>
+  <path class="flow" d="M 856 434 L 892 434"/>
+
+  <!-- Loop back to orchestrator -->
+  <path class="loop" d="M 1130 378 L 1130 330 L 790 330 L 790 322"/>
+  <text class="t s" x="1035" y="322" style="fill:#7c3aed">next investigation</text>
+
+  <text class="t s" x="28" y="528">Scope bounds, timeouts, rate limits, confidence scoring and gap detection are built in — not bolted on.</text>
+  <text class="t s" x="28" y="544" style="fill:#94a3b8">Storage: SQLite by default, PostgreSQL via DATABASE_URL.</text>
+</svg>

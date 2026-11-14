@@ -94,7 +94,8 @@ npm run dev:frontend
 Open <http://localhost:3000/investigate>. Enter a target and a claim, then press **Start investigation**.
 
 > [!TIP]
-> The root page is a placeholder. Start at `/investigate`, and open `/dossiers/{id}` when a run completes.
+> `/` lists the most recent investigations, server-rendered from the API. Start a
+> run at `/investigate`, and open `/dossiers/{id}` when it completes.
 
 ### Verify the installation
 

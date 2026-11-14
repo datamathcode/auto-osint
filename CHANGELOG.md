@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Docker Compose stack. Added a `.dockerignore`, so `Dockerfile.web`'s
+  `COPY . .` no longer copies the host's `node_modules` and `.next` over the
+  dependencies installed in the image — that broke native modules when the host
+  was macOS and the image Linux, and it inflated the build context. The `web`
+  service now waits for a healthy `api`; all three services restart unless
+  stopped; and the API receives `OLLAMA_BASE_URL`, `OLLAMA_MODEL`,
+  `MAX_EXECUTION_TIME` and `TIMEOUT_PER_TOOL`, which the application reads.
+- The README's deployment section documents the required `POSTGRES_PASSWORD`,
+  the services and ports, build-time `NEXT_PUBLIC_API_URL`, teardown, and the
+  standalone API image that falls back to SQLite on `/data`.
 - Tool clients now run the binaries they name. `build_tools()` passed no
   `binary`, so every client defaulted to its tool name (`search_username`) and
   failed with "not installed" even when sherlock was on `PATH`. The clients now

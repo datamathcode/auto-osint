@@ -8,6 +8,8 @@ Structured result shape:
 
 import json
 import logging
+import os
+import re
 from typing import Any, Dict, List, Optional
 
 from .base import OpenOSINTClient
@@ -57,6 +59,23 @@ def parse_sherlock_output(stdout: str) -> List[Dict[str, Any]]:
     return found
 
 
+SHERLOCK_LINE = re.compile(r"^\[\+\]\s*([^:]+):\s*(https?://\S+)")
+
+
+def parse_sherlock_text(stdout: str) -> List[Dict[str, Any]]:
+    """Parse sherlock's human-readable output: `[+] GitHub: https://...`.
+
+    Current sherlock releases have no JSON output mode (`--json` loads site
+    definitions from a file), so this parser is the real-world path.
+    """
+    found: List[Dict[str, Any]] = []
+    for line in stdout.splitlines():
+        match = SHERLOCK_LINE.match(line.strip())
+        if match:
+            found.append({"platform": match.group(1).strip(), "url": match.group(2).strip()})
+    return found
+
+
 class SearchUsernameClient(OpenOSINTClient):
     """Look up a username across public sites."""
 
@@ -74,11 +93,14 @@ class SearchUsernameClient(OpenOSINTClient):
             return limited
 
         try:
-            stdout = self.run_binary([target, "--json"])
+            timeout = os.getenv("SHERLOCK_TIMEOUT", "10")
+            stdout = self.run_binary(
+                [target, "--print-found", "--no-color", "--timeout", timeout]
+            )
         except Exception as exc:  # binary missing, timeout, non-zero exit
             return self.failure_from_exception(target, exc)
 
-        platforms = parse_sherlock_output(stdout)
+        platforms = parse_sherlock_output(stdout) or parse_sherlock_text(stdout)
         status = "success" if platforms else "partial"
         return self.result(
             status,

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Cloudflare Workers deployment for the frontend. The Next.js app is adapted with
+  `@opennextjs/cloudflare@1.15.0` — the last release that supports Next 14 — and
+  ships `wrangler.jsonc`, `open-next.config.ts`, and `npm run preview|deploy|upload`.
+  Verified by building the Worker and serving `/` and `/investigate` from
+  `wrangler dev` locally.
+
 ### Fixed
 
 - Docker Compose stack. Added a `.dockerignore`, so `Dockerfile.web`'s

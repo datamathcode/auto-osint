@@ -241,6 +241,24 @@ Branches: `feature/<ticket>-<slug>` → `develop` → `main`. See [BRANCHING.md]
 
 ## Deployment
 
+### Cloudflare Workers
+
+The frontend runs on Cloudflare Workers through the OpenNext adapter, pinned to
+`@opennextjs/cloudflare@1.15.0` — the last release that supports Next 14.
+
+```bash
+npm run preview   # build, then serve the Worker locally on :8787
+npm run deploy    # build, then deploy (needs `npx wrangler login` once)
+```
+
+`wrangler.jsonc` holds the Worker name, the asset binding and `API_BASE_URL`.
+Point `API_BASE_URL` at the API origin; the dossier page fetches it at request
+time on the server.
+
+The Worker is built with `nodejs_compat` and no incremental cache: every page is
+either static or `no-store`, so R2 and KV would add setup without changing
+behaviour.
+
 ### Docker Compose
 
 Requires Docker Engine with the Compose v2 plugin (`docker compose version`).

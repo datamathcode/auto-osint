@@ -58,3 +58,8 @@ data/*.db-journal
 *.egg-info/
 build/
 dist/
+
+# OpenNext / Wrangler
+.open-next
+.wrangler
+.dev.vars

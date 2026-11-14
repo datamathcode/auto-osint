@@ -1,0 +1,23 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "auto-osint",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-12-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // Self-reference service binding; the name must match the worker name.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "auto-osint"
+    }
+  ],
+  "vars": {
+    // Public API origin, behind Cloudflare Access. The dossier page fetches this
+    // server-side; browser pages go through /api/proxy on this Worker.
+    "API_BASE_URL": "https://api-auto-osint.datamathcode.dev"
+  }
+}

@@ -70,7 +70,7 @@ export default function InvestigatePage() {
   });
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    const base = "/api/proxy";
     fetch(`${base}/api/config/defaults`)
       .then((response) => (response.ok ? response.json() : null))
       .then((payload: Defaults | null) => {
@@ -100,7 +100,7 @@ export default function InvestigatePage() {
   const onSubmit = async (values: ScopeForm) => {
     setSubmitError(null);
     setSubmitting(true);
-    const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+    const base = "/api/proxy";
 
     try {
       const createResponse = await fetch(`${base}/api/investigations`, {

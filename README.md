@@ -243,15 +243,41 @@ Branches: `feature/<ticket>-<slug>` → `develop` → `main`. See [BRANCHING.md]
 
 ### Docker Compose
 
+Requires Docker Engine with the Compose v2 plugin (`docker compose version`).
+
 ```bash
-POSTGRES_PASSWORD=change-me docker compose up --build
+cp .env.example .env                                 # optional: LLM and OSINT keys
+export POSTGRES_PASSWORD="$(openssl rand -hex 16)"   # required
+docker compose up --build
 ```
 
-This starts three services: PostgreSQL, the API on `:8000`, and the UI on `:3000`.
+| Service | Port | Notes |
+|---|---|---|
+| `db` | internal | PostgreSQL 16; data kept in the `db_data` volume |
+| `api` | 8000 | FastAPI; waits for a healthy database; `/health` every 30 s |
+| `web` | 3000 | Next.js; starts once the API reports healthy |
 
-- `Dockerfile` builds the API image and runs `python -m src.python.main`.
-- `Dockerfile.web` builds the Next.js image.
-- `NEXT_PUBLIC_API_URL` is baked in at build time. Set it before you build the web image.
+Open <http://localhost:3000/investigate>. Check the API directly with
+`curl http://localhost:8000/health`.
+
+`NEXT_PUBLIC_API_URL` is compiled into the frontend at build time. Set it before
+building when the API is not at `localhost:8000`:
+
+```bash
+NEXT_PUBLIC_API_URL=https://api.example.com docker compose build web
+```
+
+Stop the stack with `docker compose down`; add `-v` to delete the database
+volume too. The images are built from the local tree — no registry image is
+published.
+
+The API image also runs without Compose and without PostgreSQL: it falls back to
+SQLite on the `/data` volume.
+
+```bash
+docker build -t auto-osint-api .
+docker run -p 8000:8000 -v auto_osint_data:/data auto-osint-api
+```
 
 ### Vercel
 

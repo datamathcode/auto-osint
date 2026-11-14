@@ -1,0 +1,31 @@
+# Build-context hygiene.
+#
+# Dockerfile.web runs `npm ci` and then `COPY . .`. Without this file the host's
+# node_modules, .next and .git land on top of the image's freshly installed
+# dependencies, which breaks native binaries (for example the platform-specific
+# @next/swc package when the host is macOS and the image is Linux) and inflates
+# the build context.
+.git
+.github
+.gitignore
+node_modules
+.next
+out
+coverage
+.vercel
+.venv
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+*.db
+*.db-journal
+data
+.env
+.env.*
+!.env.example
+docs
+tests
+.scratch
+*.log

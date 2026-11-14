@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The root page lists the six most recent investigations instead of showing a
+  hardcoded "Setup in progress..." placeholder. It is server-rendered, so it
+  reads the API on each request and says so plainly when the API is unreachable.
 - The progress page streams with SSE instead of WebSocket. A Worker cannot
   upgrade a socket without a Durable Object, and the backend already exposes
   `/sse/investigation/{id}`.

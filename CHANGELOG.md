@@ -5,6 +5,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Tool clients now run the binaries they name. `build_tools()` passed no
+  `binary`, so every client defaulted to its tool name (`search_username`) and
+  failed with "not installed" even when sherlock was on `PATH`. The clients now
+  use `sherlock` and `holehe`, overridable with `SHERLOCK_BIN` and `HOLEHE_BIN`.
+- `TIMEOUT_PER_TOOL` is applied to each client. It was documented and reported
+  by `/api/config/defaults`, but never reached a client, so every call used the
+  hard-coded 60 s default.
+- Username lookups use flags sherlock accepts. The client passed `--json`, which
+  in sherlock means "load site definitions from a file", so the binary exited 2
+  with a usage error. It now runs `--print-found --no-color --timeout <n>` and
+  parses `[+] Platform: URL` lines, keeping JSON parsing as a fallback for other
+  CLIs.
+- A full sherlock scan no longer exceeds the tool timeout. Sherlock waits 60 s
+  per site by default; across roughly 400 sites that is minutes. The request
+  timeout is now 10 s (`SHERLOCK_TIMEOUT`), which takes a full scan from over
+  three minutes to about twenty seconds.
+
 ## [0.2.1] - 2026-11-13
 
 ### Added

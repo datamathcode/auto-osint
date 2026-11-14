@@ -23,7 +23,7 @@ from src.python.tools.clients import (
     SearchUsernameClient,
 )
 from src.python.tools.clients.search_email import parse_holehe_output
-from src.python.tools.clients.search_username import parse_sherlock_output
+from src.python.tools.clients.search_username import parse_sherlock_output, parse_sherlock_text
 
 
 def make_binary(path: Path, body: str) -> Path:
@@ -67,6 +67,26 @@ class TestParsers:
     def test_sherlock_non_json_returns_empty(self):
         assert parse_sherlock_output("Sherlock is running...\nerror") == []
 
+    def test_sherlock_text_output(self):
+        stdout = (
+            "[*] Checking username alice on:\n"
+            "\n"
+            "[+] GitHub: https://www.github.com/alice\n"
+            "[+] Bluesky: https://bsky.app/profile/alice\n"
+            "\n"
+            "[*] Search completed with 2 results\n"
+        )
+
+        found = parse_sherlock_text(stdout)
+
+        assert found == [
+            {"platform": "GitHub", "url": "https://www.github.com/alice"},
+            {"platform": "Bluesky", "url": "https://bsky.app/profile/alice"},
+        ]
+
+    def test_sherlock_text_ignores_non_matches(self):
+        assert parse_sherlock_text("[-] GitHub\n[x] rate limit\n") == []
+
     def test_holehe_extracts_hits_and_urls(self):
         stdout = (
             "[+] github.com\n"
@@ -103,6 +123,33 @@ class TestSearchUsername:
         assert result["data"]["platforms_found"][0]["platform"] == "github"
         assert result["source"] == "sherlock"
         assert result["target"] == "alice"
+
+    def test_real_sherlock_text_output_is_success(self, tmp_path):
+        binary = make_binary(
+            tmp_path / "sherlock",
+            "#!/bin/sh\necho '[+] GitHub: https://www.github.com/alice'\n",
+        )
+        client = SearchUsernameClient(binary=str(binary), rate_limit={"requests_per_minute": 0})
+
+        result = client.execute("alice")
+
+        assert result["status"] == "success"
+        assert result["data"]["platforms_found"] == [
+            {"platform": "GitHub", "url": "https://www.github.com/alice"}
+        ]
+
+    def test_invocation_uses_supported_flags(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("SHERLOCK_TIMEOUT", "7")
+        binary = make_binary(tmp_path / "sherlock", '#!/bin/sh\necho "$*"\n')
+        client = SearchUsernameClient(binary=str(binary), rate_limit={"requests_per_minute": 0})
+
+        result = client.execute("alice")
+
+        raw = result["data"]["raw"]
+        assert "--print-found" in raw
+        assert "--no-color" in raw
+        assert "--timeout 7" in raw
+        assert "--json" not in raw
 
     def test_missing_target(self):
         result = SearchUsernameClient(rate_limit={"requests_per_minute": 0}).execute("")
@@ -347,3 +394,39 @@ class TestPersistenceAndAPI:
         result = client.result("success", "alice", data={"count": 0})
 
         assert client.persist(result, investigation_id=1) is None
+
+
+# --------------------------------------------------------------------------
+# production wiring
+# --------------------------------------------------------------------------
+
+class TestToolWiring:
+    """build_tools() is the only production construction site."""
+
+    def test_uses_source_binaries(self, monkeypatch):
+        monkeypatch.delenv("SHERLOCK_BIN", raising=False)
+        monkeypatch.delenv("HOLEHE_BIN", raising=False)
+        from src.python.routers.orchestration import build_tools
+
+        tools = build_tools()
+
+        assert tools["search_username"].binary == "sherlock"
+        assert tools["search_email"].binary == "holehe"
+
+    def test_applies_timeout_per_tool(self, monkeypatch):
+        monkeypatch.setenv("TIMEOUT_PER_TOOL", "42")
+        from src.python.routers.orchestration import build_tools
+
+        tools = build_tools()
+
+        assert {tool.timeout_seconds for tool in tools.values()} == {42}
+
+    def test_allows_binary_overrides(self, monkeypatch):
+        monkeypatch.setenv("SHERLOCK_BIN", "/opt/bin/sherlock")
+        monkeypatch.setenv("HOLEHE_BIN", "/opt/bin/holehe")
+        from src.python.routers.orchestration import build_tools
+
+        tools = build_tools()
+
+        assert tools["search_username"].binary == "/opt/bin/sherlock"
+        assert tools["search_email"].binary == "/opt/bin/holehe"

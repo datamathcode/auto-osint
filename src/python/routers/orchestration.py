@@ -6,6 +6,7 @@ resulting evidence, and updates the investigation summary.
 """
 
 import logging
+import os
 from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
@@ -25,11 +26,21 @@ router = APIRouter()
 
 
 def build_tools() -> Dict[str, Any]:
-    """Build the default tool set. Tests override this with stubs."""
+    """Build the default tool set. Tests override this with stubs.
+
+    Each client runs an external binary or HTTP API. The binary name comes from
+    the client's own source tool (sherlock, holehe), not the registry key, and
+    the per-tool timeout honours TIMEOUT_PER_TOOL.
+    """
+    timeout = int(os.getenv("TIMEOUT_PER_TOOL", "60"))
     return {
-        "search_username": SearchUsernameClient(),
-        "search_email": SearchEmailClient(),
-        "search_breach": SearchBreachClient(),
+        "search_username": SearchUsernameClient(
+            binary=os.getenv("SHERLOCK_BIN", "sherlock"), timeout_seconds=timeout
+        ),
+        "search_email": SearchEmailClient(
+            binary=os.getenv("HOLEHE_BIN", "holehe"), timeout_seconds=timeout
+        ),
+        "search_breach": SearchBreachClient(timeout_seconds=timeout),
     }
 
 

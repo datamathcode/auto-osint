@@ -59,9 +59,15 @@ type PlaybookPayload = {
 };
 
 async function getJson<T>(path: string): Promise<T | null> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const base = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  const clientId = process.env.CF_ACCESS_CLIENT_ID;
+  const clientSecret = process.env.CF_ACCESS_CLIENT_SECRET;
+  const headers: Record<string, string> =
+    clientId && clientSecret
+      ? { "CF-Access-Client-Id": clientId, "CF-Access-Client-Secret": clientSecret }
+      : {};
   try {
-    const response = await fetch(`${base}${path}`, { cache: "no-store" });
+    const response = await fetch(`${base}${path}`, { cache: "no-store", headers });
     if (!response.ok) return null;
     return (await response.json()) as T;
   } catch {

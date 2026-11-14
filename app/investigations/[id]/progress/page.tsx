@@ -14,9 +14,8 @@ type ProgressEvent = {
 
 const MAX_ATTEMPTS = 6;
 
-function websocketUrl(investigationId: string): string {
-  const api = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
-  return `${api.replace(/^http/, "ws")}/ws/investigation/${investigationId}`;
+function streamUrl(investigationId: string): string {
+  return `/api/proxy/sse/investigation/${investigationId}`;
 }
 
 export default function ProgressPage({ params }: { params: { id: string } }) {
@@ -26,21 +25,23 @@ export default function ProgressPage({ params }: { params: { id: string } }) {
     "connecting",
   );
   const [reconnects, setReconnects] = useState(0);
-  const socketRef = useRef<WebSocket | null>(null);
+  const socketRef = useRef<EventSource | null>(null);
   const closedByUs = useRef(false);
 
   const connect = useCallback(() => {
     if (closedByUs.current) return;
 
-    const socket = new WebSocket(websocketUrl(params.id));
-    socketRef.current = socket;
+    // SSE, not WebSocket: a Worker cannot upgrade a socket without a Durable
+    // Object, and the backend already exposes /sse/investigation/{id}.
+    const source = new EventSource(streamUrl(params.id));
+    socketRef.current = source;
 
-    socket.onopen = () => {
+    source.onopen = () => {
       setStatus("live");
       setReconnects(0);
     };
 
-    socket.onmessage = (message) => {
+    source.onmessage = (message) => {
       const event = JSON.parse(message.data) as ProgressEvent;
       if (event.type === "heartbeat") return;
 
@@ -50,13 +51,12 @@ export default function ProgressPage({ params }: { params: { id: string } }) {
       if (event.type === "investigation_complete") {
         closedByUs.current = true;
         setStatus("done");
-        socket.close();
+        source.close();
       }
     };
 
-    socket.onerror = () => setStatus("error");
-
-    socket.onclose = () => {
+    source.onerror = () => {
+      source.close();
       if (closedByUs.current) return;
       setReconnects((attempt) => {
         if (attempt + 1 > MAX_ATTEMPTS) {

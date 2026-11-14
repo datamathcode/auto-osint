@@ -255,6 +255,22 @@ npm run deploy    # build, then deploy (needs `npx wrangler login` once)
 Point `API_BASE_URL` at the API origin; the dossier page fetches it at request
 time on the server.
 
+The API sits behind Cloudflare Access, so the Worker carries a service token:
+
+```bash
+npx wrangler secret put CF_ACCESS_CLIENT_ID
+npx wrangler secret put CF_ACCESS_CLIENT_SECRET
+```
+
+Server components call the API directly with those headers. Browser pages call
+`/api/proxy/...` on the same Worker; `app/api/proxy/[...path]/route.ts` forwards
+the request and adds the token, so the credential never reaches the client.
+
+The progress page uses SSE (`/api/proxy/sse/investigation/{id}`), not WebSocket:
+a Worker cannot upgrade a socket without a Durable Object.
+
+Live deployment: <https://auto-osint.dmc-297.workers.dev>
+
 The Worker is built with `nodejs_compat` and no incremental cache: every page is
 either static or `no-store`, so R2 and KV would add setup without changing
 behaviour.
